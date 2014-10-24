@@ -54,10 +54,9 @@
 char config_file[256] = CFG;
 #else
 char config_file[256] = "/var/etc/Newbox.cfg";
-char config_badcw[256] = "/var/etc/badcw.cfg";
-char config_profiles[256] = "/var/etc/profiles.cfg";
 #endif
 
+char config_badcw[256] = "/var/etc/badcw.cfg";
 char config_channelinfo[256] = "/var/etc/Newbox.channelinfo";
 
 char cccam_nodeid[8];
@@ -729,7 +728,6 @@ int main(int argc, char *argv[])
 	sprintf( config_file, "/var/etc/%s.cfg", path);
 	sprintf( config_channelinfo, "/var/etc/%s.channelinfo", path);
 	sprintf( config_badcw, "/var/etc/%s.cfg", path);
-	sprintf( config_profiles, "/var/etc/%s.cfg", path);
 //	sprintf( sid_file, "/var/etc/%s.sid", path);
 //	sprintf( card_file, "/var/etc/%s.card", path);
 	sprintf( debug_file, "/var/tmp/%s.log", path);

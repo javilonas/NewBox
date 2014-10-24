@@ -806,6 +806,7 @@ struct program_data
 };
 
 extern char config_file[256];
+extern char config_badcw[256];
 extern char cccam_nodeid[8];
 
 void init_config(struct config_data *cfg);

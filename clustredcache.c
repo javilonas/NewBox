@@ -18,7 +18,7 @@ struct cache_data {
 	unsigned short caid;
 	unsigned int hash;
 	unsigned int prov;
-	unsigned char cw[16];
+	unsigned char cw[32]; // 16 por defecto
 	int peerid;
 
 	uint sendpipe; // Send DCW to cecm_pipe non null send dcw to ecmpipe (it is the ecm recvtime frompipe
@@ -140,7 +140,7 @@ int pipe_send_cache_find( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
 	//send pipe to cache
-	uchar buf[32];
+	uchar buf[64]; // 32 por defecto
 	buf[0] = PIPE_CACHE_FIND;
 	buf[1] = 14; // Data length
 	buf[2] = ecm->ecm[0];
@@ -158,7 +158,7 @@ int pipe_send_cache_request( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
 	//send pipe to cache
-	uchar buf[32];
+	uchar buf[64]; // 32 por defecto
 	buf[0] = PIPE_CACHE_REQUEST;
 	buf[1] = 11; // Data length
 	buf[2] = ecm->ecm[0];
@@ -173,7 +173,7 @@ int pipe_send_cache_request( ECM_DATA *ecm, struct cardserver_data *cs)
 	buf[11] = ecm->hash>>8;
 	buf[12] = ecm->hash & 0xff;
 	// Send Profile ID
-	//buf[13] = (cs->id)>>8; buf[14] = (cs->id)&0xff;
+	//buf[13] = (cs->id)>>8; buf[14] = (cs->id)&0xff; // test
 	//debugf(" Pipe Ecm->Cache: PIPE_CACHE_FIND %04x:%04x:%08x\n",ecm->caid, ecm->sid, ecm->hash);
 	pipe_send( srvsocks[0], buf, 13);
 	return 1;
@@ -185,7 +185,7 @@ int pipe_recv_cache_request(uchar *buf,struct cache_data *req)
 	req->sid = (buf[3]<<8) | buf[4];
 	req->onid = (buf[5]<<8) | buf[6];
 	req->caid = (buf[7]<<8) | buf[8];
-	req->hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) |buf[12];
+	req->hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) | buf[12];
 	return ( (buf[13]<<8)|buf[14] );
 }
 
@@ -193,7 +193,7 @@ int pipe_recv_cache_request(uchar *buf,struct cache_data *req)
 int pipe_send_cache_reply( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
-	uchar buf[32];
+	uchar buf[64]; // 32 por defecto
 	buf[0] = PIPE_CACHE_REPLY;
 	buf[2] = ecm->ecm[0];
 	buf[3] = (ecm->sid)>>8;
@@ -273,7 +273,7 @@ void sendtopeer( struct cs_cachepeer_data *peer, unsigned char *buf, int len)
 
 void cache_send_request(struct cache_data *pcache,struct cs_cachepeer_data *peer)
 {
-	uchar buf[16];
+	uchar buf[32]; //16 por defecto
 	//01 80 00CD 0001 0500 8D1DB359
 	buf[0] = TYPE_REQUEST;
 	buf[1] = pcache->tag;
@@ -322,6 +322,7 @@ void cache_send_reply(struct cache_data *pcache,struct cs_cachepeer_data *peer)
 		//buf[29] = 0; buf[30] = strlen(cs->name); memcpy(buf+31, cs->name, strlen(cs->name) ); 
 		sendtopeer(peer, buf, 29);
 	}
+//  }
 }
 
 
@@ -335,7 +336,6 @@ void cache_send_resendreq(struct cache_data *pcache,struct cs_cachepeer_data *pe
 	buf[2] = 0;
 	buf[3] = cfg.cacheport>>8;
 	buf[4] = cfg.cacheport&0xff;
-
 	buf[5] = pcache->tag;
 	buf[6] = pcache->sid>>8;
 	buf[7] = pcache->sid;
@@ -353,9 +353,9 @@ void cache_send_resendreq(struct cache_data *pcache,struct cs_cachepeer_data *pe
 void cache_send_ping(struct cs_cachepeer_data *peer)
 {
 // 03 00 00 01 2F EE B1 CB 54 00 00 D8 03 
-	unsigned char buf[32];
-    struct timeval tv;
-    gettimeofday( &tv, NULL );
+	unsigned char buf[64]; //32 default
+	struct timeval tv;
+	gettimeofday( &tv, NULL );
 	buf[0] = TYPE_PINGREQ;
 
 	// Self Program Use
@@ -364,10 +364,10 @@ void cache_send_ping(struct cs_cachepeer_data *peer)
 	buf[3] = 0; // ping packet number
 	buf[4] = peer->id>>8; 
 	buf[5] = peer->id&0xff;
-	// NewBox Identification
+	// Multics Identification
 	buf[6] = 0; // unused must be zero (for next use)
-	buf[7] = 'N'^buf[1]^buf[2]^buf[3]^buf[4]^buf[5]^buf[6]; // NewBox Checksum
-	buf[8] = 'N'; // NewBox ID
+	buf[7] = 'N'^buf[1]^buf[2]^buf[3]^buf[4]^buf[5]^buf[6]; // Multics Checksum
+	buf[8] = 'N'; // Multics ID
 	//Port
 	buf[9] = 0;
 	buf[10] = 0;
@@ -376,12 +376,15 @@ void cache_send_ping(struct cs_cachepeer_data *peer)
 	//Program
 	buf[13] = 0x01; //ID
 	buf[14] = 7; //LEN
-	buf[15] = 'N'; buf[16] = 'e'; buf[17] = 'w'; buf[18] = 'B'; buf[19] = 'o'; buf[20] = 'X';
+	buf[15] = 'N'; buf[16] = 'e'; buf[17] = 'w'; buf[18] = 'B'; buf[19] = 'o'; buf[20] = 'x';
+	buf[21] = 0;
 	//Version
-	buf[21] = 0x02; //ID
-	buf[22] = 3; //LEN
-	buf[23] = 'v'; buf[24] = '0'+(REVISION/10); buf[25] = '0'+(REVISION%10);
-	sendtopeer( peer, buf, 26);
+	buf[22] = 0x02; //ID
+	buf[23] = 3; //LEN
+	buf[24] = 'v'; buf[25] = '0'+(REVISION/10); buf[26] = '0'+(REVISION%10);
+	buf[27] = 0;
+	buf[28] = 0;
+	sendtopeer( peer, buf, 29);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -471,7 +474,7 @@ void cache_recvmsg()
 					req.sid = (buf[2]<<8) | buf[3];
 					req.onid = (buf[4]<<8) | buf[5];
 					req.caid = (buf[6]<<8) | buf[7];
-					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) |buf[11];
+					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
 					// Check Cache Request
 					if (!cache_check(&req)) break;
 					//
@@ -534,7 +537,7 @@ void cache_recvmsg()
 					req.sid = (buf[2]<<8) | buf[3];
 					req.onid = (buf[4]<<8) | buf[5];
 					req.caid = (buf[6]<<8) | buf[7];
-					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) |buf[11];
+					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
 					// Check Cache Request
 					if (!cache_check(&req)) {
 						//peer->rep_badfields++;
@@ -566,7 +569,7 @@ void cache_recvmsg()
 							memcpy(pcache->cw, buf+13, 16);
 							pcache->status = CACHE_STAT_DCW;
 							if (pcache->sendpipe) {
-								uchar buf[32];
+								uchar buf[64]; // 32 por defecto
 								buf[0] = PIPE_CACHE_FIND_SUCCESS;
 								buf[1] = 11+2+16; // Data length
 								buf[2] = pcache->tag;
@@ -603,7 +606,7 @@ void cache_recvmsg()
 							memcpy(pcache->cw, buf+13, 16);
 							pcache->status = CACHE_STAT_DCW;
 
-							uchar buf[32];
+							uchar buf[64]; // 32 por defecto
 							buf[0] = PIPE_CACHE_FIND_SUCCESS;
 							buf[1] = 11+2+16; // Data length
 							buf[2] = pcache->tag;
@@ -647,10 +650,10 @@ void cache_recvmsg()
 									if ( (index+buf[index+1]+2)>received ) break;
 									switch(buf[index]) {
 										case 0x01:
-											if (buf[index+1]<32) { memcpy(peer->program, buf+index+2, buf[index+1]); peer->program[buf[index+1]] = 0; }
+											if (buf[index+1]<64)/*32*/ { memcpy(peer->program, buf+index+2, buf[index+1]); peer->program[buf[index+1]] = 0; }
 											break;
 										case 0x02:
-											if (buf[index+1]<32) { memcpy(peer->version, buf+index+2, buf[index+1]); peer->version[buf[index+1]] = 0; }
+											if (buf[index+1]<64)/*32*/ { memcpy(peer->version, buf+index+2, buf[index+1]); peer->version[buf[index+1]] = 0; }
 											break;
 									}
 									index += 2+buf[index+1];
@@ -765,7 +768,7 @@ void cache_recvmsg()
 
 void cache_pipe_recvmsg()
 {
-	uchar buf[300];
+	uchar buf[512]; // 300 por defecto
 	struct cache_data req;
 	struct cs_cachepeer_data *peer;
 	uint ticks = GetTickCount();
@@ -850,7 +853,7 @@ void cache_pipe_recvmsg()
 				req.sid = (buf[3]<<8) | buf[4];
 				req.onid = (buf[5]<<8) | buf[6];
 				req.caid = (buf[7]<<8) | buf[8];
-				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) |buf[12];
+				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) | buf[12];
 				// Check Cache Request
 				if (!cache_check(&req)) break;
 				//
@@ -878,7 +881,7 @@ void cache_pipe_recvmsg()
 				req.sid = (buf[3]<<8) | buf[4];
 				req.onid = (buf[5]<<8) | buf[6];
 				req.caid = (buf[7]<<8) | buf[8];
-				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) |buf[12];
+				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) | buf[12];
 				// Check Cache Request
 				if (!cache_check(&req)) break;
 				//
@@ -1044,8 +1047,8 @@ void *cachepipe_thread(void *param)
 
 int start_thread_cache()
 {
-	create_prio_thread(&prg.tid_cache, (threadfn)cache_thread,NULL, 50);
-	create_prio_thread(&prg.tid_cache, (threadfn)cachepipe_thread,NULL, 20);
+	create_prio_thread(&prg.tid_cache, (threadfn)cache_thread, NULL, 50);
+	create_prio_thread(&prg.tid_cache, (threadfn)cachepipe_thread, NULL, 20);
 	return 0;
 }
 

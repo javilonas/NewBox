@@ -142,9 +142,6 @@
 0100:004106:7732 "Digital+ 19.2E [SECA] >> TVI INTER. [S2 4106]"
 
 
-#CCcam.channelinfo [NAGRA] - Actualizado 28.01.2014
-
-
 1810:000000:77C0 "Digital+ 19.2E [NAGRA] >> TVE 1 [N3 1810]"
 1810:000000:77C2 "Digital+ 19.2E [NAGRA] >> LA 2 [N3 1810]"
 1810:000000:7604 "Digital+ 19.2E [NAGRA] >> ANTENA 3 [N3 1810]"

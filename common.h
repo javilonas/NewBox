@@ -1,10 +1,10 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#define FD_SETSIZE2  4096 // 4096 default
+#define FD_SETSIZE2  4196 // 4096 default
 
-#define DELAY_MAIN		10000
-#define DELAY_RECV		0
+#define DELAY_MAIN	10000
+#define DELAY_RECV	0
 #define DELAY_ACCEPT	100000
 
 
@@ -24,7 +24,7 @@
 #endif
 #endif
 
-#define DATE_BUILD    "23-10-2014"
+#define DATE_BUILD    "24-10-2014"
 #define VERSION    "01"
 #define REVISION   01
 

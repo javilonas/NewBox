@@ -1890,7 +1890,6 @@ int read_config(struct config_data *cfg)
 }
 
 
-
 int read_chinfo( struct program_data *prg )
 {
 	FILE *fhandle;
@@ -1959,7 +1958,6 @@ int read_chinfo( struct program_data *prg )
 	debugf(" config: reading %d channels.\n", chncount);
 	return 0;
 }
-
 
 ///////////////////////////////////////////////////////////////////////////////
 

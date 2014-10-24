@@ -3,7 +3,7 @@
 /////
 
 // TCP DATA
-#define MAX_BUFFERSIZE   1024 // 1024 default
+#define MAX_BUFFERSIZE   2048 // 1024 default
 char tcp_buffer[MAX_BUFFERSIZE];
 int tcp_bufindex; // current pos.
 int tcp_bufsize; // allocated size
