@@ -63,6 +63,14 @@ ifeq ($(target),openwrt)
   CFLAGS	= -s -ggdb3 -O2 -DTARGET=3 $(OPTS)
   LFLAGS	= $(CFLAGS)
 else
+ifeq ($(target),arm)
+  CC        = $(CROSS_COMPILE)gcc
+  CXX       = $(CROSS_COMPILE)g++
+  STRIP     = $(CROSS_COMPILE)strip
+  OUTPUT	= arm/
+  CFLAGS	= -s -ggdb3 -O2 -DTARGET=3 $(OPTS)
+  LFLAGS	= $(CFLAGS)
+else
 ifeq ($(target),ppc)
   CC        = $(CROSS_COMPILE)gcc
   CXX       = $(CROSS_COMPILE)g++
@@ -85,6 +93,7 @@ else
   OUTPUT	= x/
   CFLAGS	= -ggdb3 -O2 -Wall -I. -DTARGET=2 $(OPTS)
   LFLAGS	= $(CFLAGS)
+endif
 endif
 endif
 endif
@@ -127,4 +136,5 @@ cleanall:
 	$(MAKE) target=win32 clean
 	$(MAKE) target=openwrt clean
 	$(MAKE) target=sh4 clean
+	$(MAKE) target=arm clean
 
