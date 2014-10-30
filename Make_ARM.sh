@@ -11,6 +11,6 @@ export TOOLCHAIN=/home/lonas/toolchains/arm-unknown-linux-gnueabi
 
 make cleanall
 
-make target=mips CROSS_COMPILE=$TOOLCHAIN/bin/arm-unknown-linux-gnueabi-
+make target=arm CROSS_COMPILE=$TOOLCHAIN/bin/arm-unknown-linux-gnueabi-
 
-chmod 755 Make_MIPS.sh
+chmod 755 Make_ARM.sh
