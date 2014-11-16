@@ -4,6 +4,7 @@
 
 #include "globals.h"
 #include "helpfunctions.h"
+#include "emulator.h"
 
 #include <stdio.h>
 #include <stdlib.h>

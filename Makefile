@@ -137,7 +137,7 @@ OBJECTS = $(OUTPUT)sha1.o $(OUTPUT)des.o $(OUTPUT)md5.o $(OUTPUT)convert.o $(OUT
 	$(OUTPUT)sockets.o $(OUTPUT)msg-newcamd.o $(OUTPUT)msg-cccam.o $(OUTPUT)msg-radegast.o $(OUTPUT)parser.o $(OUTPUT)config.o \
         $(OUTPUT)bn_ctx.o $(OUTPUT)bn_lib.o $(OUTPUT)bn_exp.o $(OUTPUT)bn_sqr.o $(OUTPUT)bn_div.o $(OUTPUT)bn_asm.o $(OUTPUT)bn_shift.o \
         $(OUTPUT)bn_word.o $(OUTPUT)bn_add.o $(OUTPUT)bn_mul.o $(OUTPUT)aes.o $(OUTPUT)i_cbc.o $(OUTPUT)i_ecb.o $(OUTPUT)i_skey.o \
-        $(OUTPUT)mem.o $(OUTPUT)via3surenc.o \
+        $(OUTPUT)mem.o $(OUTPUT)via3surenc.o $(OUTPUT)emulator.o\
 	$(OUTPUT)ecmdata.o $(OUTPUT)httpserver.o $(OUTPUT)main.o
 
 
