@@ -1,5 +1,9 @@
-#ifndef _DES_H_
-#define _DES_H_
+#ifndef CSCRYPT_DES_H_
+#define CSCRYPT_DES_H_
+
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
 #define CRYPT           0
 #define HASH            1
@@ -24,20 +28,23 @@
 
 typedef unsigned char byte;
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif		/* __cplusplus */
-
 extern void EuroDes(byte key1[], byte key2[], byte DesMode, byte OperatingMode, 
                     byte data[]);
 extern int des_encrypt(byte *buffer, int len, byte *deskey);
 extern int des_decrypt(byte *buffer, int len, byte *deskey);
 extern void des_login_key_get(byte *key1, byte *key2, int len, byte *des16);
 
+	extern int des_encrypt(byte *buffer, int len, byte *deskey);
+	extern int des_decrypt(byte *buffer, int len, byte *deskey);
+	extern void des_login_key_get(byte *key1, byte *key2, int len, byte *des16);
+	extern void doPC1(unsigned char data[]);
+	extern void des_ede2_cbc_encrypt(byte *data, const byte *iv, const byte *okey1, const byte *okey2, int len);
+	extern void des_ede2_cbc_decrypt(byte *data, byte *iv, const byte *okey1, const byte *okey2, int len);
+	extern void des(byte key[], byte mode, byte data[]);
+
 #ifdef __cplusplus
 }
-#endif		/* __cplusplus */
+#endif
 
 extern void doPC1(byte data[]);
 extern void des(byte key[], byte mode, byte data[]);
@@ -45,4 +52,6 @@ extern void des(byte key[], byte mode, byte data[]);
 enum { ECM=0, ECS2=1, ECS3=2 };
 
 #endif
+
+
 

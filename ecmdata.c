@@ -2,6 +2,8 @@
 // File: ecmdata.c
 /////
 
+#include "globals.h"
+#include "helpfunctions.h"
 
 #include <stdio.h>
 #include <stdlib.h>

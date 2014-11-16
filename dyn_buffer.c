@@ -27,6 +27,7 @@ void *dynbuf_init( struct dyn_buffer *dbf, int size )
 	return data;
 }
 
+
 void *dynbuf_realloc( struct dyn_buffer *dbf, int newsize )
 {
 	newsize = (newsize+1023)/1024;
@@ -39,6 +40,7 @@ void *dynbuf_realloc( struct dyn_buffer *dbf, int newsize )
 	dbf->allocsize = newsize;
 	return newdata;
 }
+
 
 void dynbuf_write( struct dyn_buffer *dbf, unsigned char *data, int size )
 {
@@ -59,4 +61,5 @@ void dynbuf_free( struct dyn_buffer *dbf )
 	dbf->datasize = 0;
 	dbf->allocsize = 0;
 }
+
 

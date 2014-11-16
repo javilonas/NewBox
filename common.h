@@ -24,9 +24,9 @@
 #endif
 #endif
 
-#define DATE_BUILD    "30-10-2014"
-#define VERSION    "02"
-#define REVISION   02
+#define DATE_BUILD    "16-10-2014"
+#define VERSION    "03"
+#define REVISION   03
 
 #define FALSE 0
 #define TRUE 1

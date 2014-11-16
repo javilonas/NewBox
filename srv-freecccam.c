@@ -279,11 +279,11 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 			cli->chkrecvtime = 0;
 			len = cc_msg_recv( cli->handle, &cli->recvblock, buf, 3);
 			if (len==0) {
-				debugf(" FreeCCcam: client(%s) read failed %d\n", cli->user,len);
+				debugf(" FreeCCcam: client(%s) read failed %d\n", cli->user, len);
 				cc_disconnect_cli(cli);
 			}
 			else if (len<0) {
-				debugf(" FreeCCcam: client(%s) read failed %d(%d)\n", cli->user,len,errno);
+				debugf(" FreeCCcam: client(%s) read failed %d(%d)\n", cli->user, len, errno);
 				cc_disconnect_cli(cli);
 			}
 			else if (len>0) {
@@ -363,7 +363,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 						pthread_mutex_lock(&prg.lockecm);
 	
 						// Search for ECM
-						int ecmid = search_ecmdata_dcw( data,  len-17, sid); // dont get failed ecm request from cache
+						int ecmid = search_ecmdata_dcw( data, len-17, sid); // dont get failed ecm request from cache
 						if ( ecmid!=-1 ) {
 							ECM_DATA *ecm=getecmbyid(ecmid);
 							ecm->lastrecvtime = GetTickCount();

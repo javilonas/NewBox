@@ -1,4 +1,4 @@
-NewBox - CardServer v0.2
+NewBox - CardServer v0.3 (Test)
 ============================================
 
 Source Code: https://github.com/javilonas/NewBox

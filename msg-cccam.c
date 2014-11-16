@@ -5,18 +5,25 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <string.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include <netdb.h>
 #include <signal.h>
+#include <netdb.h> 
+#include <string.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <errno.h>
+#include <pthread.h>
 
 #include "common.h"
+#include "des.h"
 #include "debug.h"
-#include "msg-cccam.h"
 #include "sockets.h"
+#include "msg-cccam.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -120,6 +127,7 @@ void cc_crypt_cw(uint8 *nodeid/*client node id*/, uint32 card_id, uint8 *cws)
 }
 
 
+
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
@@ -178,6 +186,7 @@ int cc_msg_recv(int handle,struct cc_crypt_block *recvblock, uint8 *buf, int tim
 	memcpy(buf, netbuf, len);
 	return len;
 }
+
 
 
 

@@ -5,6 +5,9 @@
 #define HTTP_GET  0
 #define HTTP_POST 1
 
+#include "globals.h"
+#include "helpfunctions.h"
+
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>

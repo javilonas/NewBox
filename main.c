@@ -2,6 +2,8 @@
 // File: main.c
 /////
 
+#include "globals.h"
+#include "helpfunctions.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +36,8 @@
 #include "convert.h"
 
 #include "des.h"
+#include "bn.h"
+#include "idea.h"
 #include "md5.h"
 #include "sha1.h"
 
@@ -51,13 +55,13 @@
 #include "httpserver.h"
 
 #ifdef CFG
-char config_file[256] = CFG;
+char config_file[512] = CFG;
 #else
-char config_file[256] = "/var/etc/Newbox.cfg";
+char config_file[512] = "/var/etc/Newbox.cfg";
 #endif
 
-char config_badcw[256] = "/var/etc/badcw.cfg";
-char config_channelinfo[256] = "/var/etc/Newbox.channelinfo";
+char config_badcw[2048] = "/var/etc/badcw.cfg";
+char config_channelinfo[512] = "/var/etc/Newbox.channelinfo";
 
 char cccam_nodeid[8];
 
@@ -67,8 +71,6 @@ int flag_debugfile;
 char debug_file[256];
 char sms_file[256];
 
-///
-///
 struct config_data cfg;
 struct program_data prg;
 
@@ -628,7 +630,7 @@ int mainprocess()
 
 	start_thread_cache();
 
-	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread,NULL, 50);
+	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread, NULL, 50);
 #ifdef RADEGAST_SRV
 	pthread_t rdgd_cli_tid;
 	create_prio_thread(&rdgd_cli_tid, (threadfn)rdgd_connect_cli_thread, NULL, 50); // Lock server
@@ -698,7 +700,21 @@ void install_handler (void)
 }
 #endif
 
-int main(int argc, char *argv[])
+///
+static struct aes_keys cl_aes_keys;
+static uchar cl_ucrc[4];
+static unsigned char cl_user[128];
+static unsigned char cl_passwd[128];
+
+static int cl_sockfd;
+static struct sockaddr_in cl_socket;
+
+#define REQ_SIZE	584		// 512 + 20 + 0x34
+
+#define suppresscmd08 1
+
+//int main(int argc, char *argv[])
+int main(int argc, char**argv)
 {
 	int option_background = 0; // default
 	int fork_return;
@@ -779,6 +795,9 @@ OPTIONS\n\
 		//else mainprocess();
 	}
 
+	unsigned char mbuf[20+1024];
+	unsigned char md5tmp[MD5_DIGEST_LENGTH];
+
 	prg.pid_main = getpid();
 
 	mainprocess();
@@ -814,4 +833,3 @@ OPTIONS\n\
 	}
 	return 0;
 }
-

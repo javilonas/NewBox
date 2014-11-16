@@ -2,7 +2,6 @@
 // File: sockets.c
 /////
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

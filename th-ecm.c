@@ -3,7 +3,7 @@
 /////
 
 
-#define MAXSRVTAB 255
+#define MAXSRVTAB 512
 
 struct srvtab_data
 {
@@ -169,14 +169,14 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 #endif
 			// Mgcamd
 #ifdef MGCAMD_SRV
-/*
+
 			struct mg_client_data *mgcli = cfg.mgcamd.client;
 			while (mgcli) {
 				if ( (mgcli->handle!=INVALID_SOCKET)&&(mgcli->ip==srvtab[j].srv->host->ip)&&(mgcli->ecm.busy)&&(mgcli->ecm.id==ecmid) ) break; // DELETE SERVER
 				mgcli = mgcli->next;
 			}
 			if (mgcli) continue;
-*/
+
 #endif
 			// ADD SERVER
 			if (i<j) memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
@@ -408,7 +408,7 @@ uint32 check_sendecm()
 				static char msg[] = "Invalid profile id";
 				ecm->statusmsg = msg;
 				ecm->dcwstatus = STAT_DCW_FAILED;
-				cs_dcw_check_time=0;
+				cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 				mg_dcw_check_time = 0;
 #endif
@@ -432,7 +432,7 @@ uint32 check_sendecm()
 					static char msg[] = "Decode failed, max servers is reached and no more servers to wait";
 					ecm->statusmsg = msg;
 					ecm->dcwstatus = STAT_DCW_FAILED;
-					cs_dcw_check_time=0;
+					cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 					mg_dcw_check_time = 0;
 #endif
@@ -458,7 +458,7 @@ uint32 check_sendecm()
 					static char msg[] = "Decode failed";
 					ecm->statusmsg = msg;
 					ecm->dcwstatus = STAT_DCW_FAILED;
-					cs_dcw_check_time=0;
+					cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 					mg_dcw_check_time = 0;
 #endif
@@ -492,7 +492,7 @@ uint32 check_sendecm()
 							static char msg[] = "No servers found to decode";
 							ecm->statusmsg = msg;
 							ecm->dcwstatus = STAT_DCW_FAILED;
-							cs_dcw_check_time=0;
+							cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 							mg_dcw_check_time = 0;
 #endif
@@ -604,7 +604,7 @@ uint32 check_sendecm()
 				static char msg[] = "no more time to send request";
 				ecm->statusmsg = msg;
 				ecm->dcwstatus = STAT_DCW_FAILED;
-				cs_dcw_check_time=0;
+				cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 				mg_dcw_check_time = 0;
 #endif
@@ -829,7 +829,7 @@ void ecm_setdcw( struct cardserver_data *cs, ECM_DATA *ecm, uchar dcw[16], int s
 				}
 			}
 			// Send DCW to clients
-			cs_dcw_check_time=0;
+			cs_dcw_check_time = 0;
 #ifdef MGCAMD_SRV
 			mg_dcw_check_time = 0;
 #endif

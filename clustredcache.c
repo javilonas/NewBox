@@ -322,7 +322,6 @@ void cache_send_reply(struct cache_data *pcache,struct cs_cachepeer_data *peer)
 		//buf[29] = 0; buf[30] = strlen(cs->name); memcpy(buf+31, cs->name, strlen(cs->name) ); 
 		sendtopeer(peer, buf, 29);
 	}
-//  }
 }
 
 
@@ -336,6 +335,7 @@ void cache_send_resendreq(struct cache_data *pcache,struct cs_cachepeer_data *pe
 	buf[2] = 0;
 	buf[3] = cfg.cacheport>>8;
 	buf[4] = cfg.cacheport&0xff;
+
 	buf[5] = pcache->tag;
 	buf[6] = pcache->sid>>8;
 	buf[7] = pcache->sid;

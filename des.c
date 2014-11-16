@@ -1,9 +1,16 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include "globals.h"
+#include "helpfunctions.h"
 #include "des.h"
 
-static byte  PC2[8][6] = 
+#define CRYPT           0
+#define HASH            1
+
+#define F_EURO_S2       0
+#define F_TRIPLE_DES    1
+
+#define TestBit(addr, bit) ((addr) & (1 << bit))
+
+static byte PC2[8][6] =
 {
     { 14, 17, 11, 24,  1,  5 },
     {  3, 28, 15,  6, 21, 10 },
@@ -16,7 +23,7 @@ static byte  PC2[8][6] =
 };
 
 
-static byte  E[8][6] =
+static byte E[8][6] =
 {
     { 32,  1,  2,  3,  4,  5 },
     {  4,  5,  6,  7,  8,  9 },
@@ -25,19 +32,19 @@ static byte  E[8][6] =
     { 16, 17, 18, 19, 20, 21 },
     { 20, 21, 22, 23, 24, 25 },
     { 24, 25, 26, 27, 28, 29 },
-    { 28, 29, 30, 31, 32,  1 } 
+    { 28, 29, 30, 31, 32,  1 }
 };
 
 
 
-static byte  P[32] =
+static byte P[32] =
 {
     16,  7, 20, 21, 29, 12, 28, 17,  1, 15, 23, 26,  5, 18, 31, 10,
      2,  8, 24, 14, 32, 27,  3,  9, 19, 13, 30,  6, 22, 11,  4, 25
 };
                                
 
-static byte  SBOXES[4][64] =
+static byte SBOXES[4][64] =
 {
     {
         0x2e, 0xe0, 0xc4, 0xbf, 0x4d, 0x27, 0x11, 0xc4,
@@ -83,9 +90,9 @@ static byte  SBOXES[4][64] =
 
 
 
-static byte  PC1[][8] = 
+static byte PC1[][8] =
 {
-  {57, 49, 41, 33, 25, 17,  9, 1}, 
+  {57, 49, 41, 33, 25, 17,  9, 1},
   {58, 50, 42, 34, 26, 18, 10, 2},
   {59, 51, 43, 35, 27, 19, 11, 3},
   {60, 52, 44, 36, 63, 55, 47,39},
@@ -272,7 +279,7 @@ void permut32(byte data[])
 {
   byte i, j;
   byte bit;
-  byte r[4];
+  byte r[4] = {0}; // init to keep Valgrind happy
   byte *p;
 
   for(i=0; i<32; i++)
@@ -337,8 +344,8 @@ void desRound(byte left[], byte right[], byte data[], byte mode, byte k8)
 }
 
 void des(byte key[], byte mode, byte data[])
-{    
-  byte i; 
+{
+  byte i;
   byte left[8];
   byte right[8];
   byte *p = left;
@@ -379,7 +386,7 @@ void des(byte key[], byte mode, byte data[])
 
 }
 
-byte getmask(byte *OutData, byte *Mask, byte I, byte J) 
+byte getmask(byte *OutData, byte *Mask, byte I, byte J)
 {
   byte K, B, M, M1 , D, DI, MI;
 
@@ -404,7 +411,7 @@ byte getmask(byte *OutData, byte *Mask, byte I, byte J)
   MI ^= 4;
   M = Mask[MI];
   B = 0;
-  for(K = 0; K <=7; K++) 
+  for(K = 0; K <=7; K++)
   {
     if ((D & 1) == 1) B += M;
     D = (D >> 1) + ((B & 1) << 7);
@@ -413,7 +420,7 @@ byte getmask(byte *OutData, byte *Mask, byte I, byte J)
   return D ^ M1;
 }
 
-void v2mask(byte *cw, byte *mask) 
+void v2mask(byte *cw, byte *mask)
 {
 	int i, j;
 
@@ -423,11 +430,11 @@ void v2mask(byte *cw, byte *mask)
 	for(i = 0; i <= 7; i++)
 		for(j = 0; j <=3; j++)
 			cw[i] ^= getmask(cw, mask, i, j);
-}                                                                                
+}
 
 
 void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte data[])
-{                   
+{
   byte mode;
 
  if(key1[7]) { /* Viaccess */
@@ -438,7 +445,7 @@ void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte da
    des(key1, mode, data);
    if(key2 != NULL)
      	v2mask(data, key2);
- } 
+ }
  else if(TestBit(desMode, F_TRIPLE_DES))
  {
    /* Eurocrypt 3-DES */
@@ -459,10 +466,10 @@ void EuroDes(byte key1[], byte key2[], byte desMode, byte operatingMode, byte da
      mode = (operatingMode == HASH) ? DES_ECS2_CRYPT : DES_ECS2_DECRYPT;
    }
    else
-   {                           
+   {
      /* Eurocrypt M */
      mode = (operatingMode == HASH) ? DES_ECM_HASH : DES_ECM_CRYPT;
-   }                          
+   }
    des(key1, mode, data);
  }
 }
@@ -500,6 +507,7 @@ void des_key_spread(byte *normal,byte *spread)
   spread[15] = normal[13] << 1;
 
   des_key_parity_adjust(spread, 16);
+  return spread;
 }
 
 void des_random_get(byte *buffer, byte len)
@@ -514,7 +522,7 @@ void des_random_get(byte *buffer, byte len)
   }
 }
 
-//#define CWS_NETMSGSIZE 300
+#define CWS_NETMSGSIZE 400
 
 int des_encrypt(byte *buffer, int len, byte *deskey)
 {
@@ -526,7 +534,7 @@ int des_encrypt(byte *buffer, int len, byte *deskey)
 
   if (!deskey) return len;
   noPadBytes = (8 - ((len - 1) % 8)) % 8;
-  //if (len + noPadBytes + 1 >= CWS_NETMSGSIZE-8) return -1;
+  if (len + noPadBytes + 1 >= CWS_NETMSGSIZE-8) return -1;
   des_random_get(padBytes, noPadBytes);
   for (i = 0; i < noPadBytes; i++) buffer[len++] = padBytes[i];
   for (i = 2; i < len; i++) checksum ^= buffer[i];
@@ -538,7 +546,7 @@ int des_encrypt(byte *buffer, int len, byte *deskey)
     byte j;
     const byte flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
     for(j=0; j<8; j++) buffer[i+j] ^= ivec[j];
-    EuroDes(deskey, deskey+8, flags, 1, buffer+i);
+    EuroDes(deskey, deskey+8, flags, HASH, buffer+i);
     memcpy(ivec, buffer+i, 8);
   }
   len += 8;
@@ -563,10 +571,10 @@ int des_decrypt(byte *buffer, int len, byte *deskey)
 
     memcpy(ivec, nextIvec, 8);
     memcpy(nextIvec, buffer+i, 8);
-    EuroDes(deskey, deskey+8, flags, 0, buffer+i);
+    EuroDes(deskey, deskey+8, flags, CRYPT, buffer+i);
     for(j=0; j<8; j++)
       buffer[i+j] ^= ivec[j];
-  } 
+  }
   for (i = 2; i < len; i++) checksum ^= buffer[i];
   if (checksum) return -1;
   return len;
@@ -583,4 +591,3 @@ void des_login_key_get(byte *key1, byte *key2, int len, byte *des16)
   doPC1(des16);
   doPC1(des16+8);
 }
-

@@ -565,10 +565,9 @@ struct cc_client_data { // Connected Client
 struct cccam_server {
 #ifdef CCCAM_SRV
 	struct cc_client_data *client;
-	unsigned char key[16];
-	int port; // output port
-	SOCKET handle;
+	int handle;
 	int ipoll;
+	int port; // output port
 	unsigned short csport[MAX_CSPORTS]; // default cards
 	int dcwtime;
 #endif
@@ -805,8 +804,9 @@ struct program_data
 	pthread_mutex_t lockdcw;
 };
 
-extern char config_file[256];
-extern char config_badcw[256];
+extern char config_file[512];
+extern char config_badcw[2048];
+extern char config_channelinfo[512];
 extern char cccam_nodeid[8];
 
 void init_config(struct config_data *cfg);

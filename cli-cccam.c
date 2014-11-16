@@ -28,7 +28,7 @@ int cc_sendinfo_srv(struct cs_server_data *srv, int isnewbox)
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
 	memcpy(buf, srv->user, 20);
-	memcpy(buf + 20, cfg.cccam.nodeid, 8 );
+	memcpy(buf + 20, cfg.cccam.nodeid, 8);
 	buf[28] = 0; //srv->wantemus;
 	memcpy(buf + 29, cfg.cccam.version, 32);	// cccam version (ascii)
 	memcpy(buf + 61, cfg.cccam.build, 32);	// build number (ascii)
@@ -398,7 +398,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 						memset(card, 0, sizeof(struct cs_card_data) );
 						card->shareid = buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7];
 						card->uphops = buf[14]+1;
-						memcpy( card->nodeid, buf+26+buf[24]*7, 8);
+						memcpy(card->nodeid, buf+26+buf[24]*7, 8);
 						card->caid = (buf[12]<<8)+(buf[13]);
 						card->nbprov = buf[24];
 						card->sids = NULL;
@@ -462,7 +462,7 @@ int cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 		buf[10] = ecm->sid>>8;
 		buf[11] = ecm->sid&0xff;
 		buf[12] = ecm->ecmlen;
-		memcpy( &buf[13],&ecm->ecm[0], ecm->ecmlen);
+		memcpy( &buf[13],&ecm->ecm[0], ecm->ecmlen );
 
 		srv->lastecmtime = GetTickCount();
 		srv->busy = 1;
