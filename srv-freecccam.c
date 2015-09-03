@@ -1,6 +1,21 @@
-////
-// File: srv-freecccam.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 
 void freecc_cli_recvmsg(struct cc_client_data *cli);
@@ -22,13 +37,13 @@ void frcc_sendcards_cli(struct cc_client_data *cli)
 			if(cfg.freecccam.csport[i]) {
 				cs = getcsbyport(cfg.freecccam.csport[i]);
 				if (cs)
-					if (cc_sendcard_cli(cs, cli, 0)) nbcard++;
+					if (cc_sendcard_cli(cs, cli,0)) nbcard++;
 			} else break;
 		}
 	}
 	else {
 		while (cs) {
-			if (cc_sendcard_cli(cs, cli, 0)) nbcard++;
+			if (cc_sendcard_cli(cs, cli,0)) nbcard++;
 			cs = cs->next;
 		}
 	}
@@ -78,11 +93,11 @@ void *freecc_connect_cli(struct struct_clicon *param)
 	cc_crypt_init(&recvblock, data, 16);
 	cc_decrypt(&recvblock, buf, 20);
 	//debugdump(buf, 20, "SHA1 hash:");
-	memcpy(usr, buf, 20);
-	if ((i=recv_nonb(sock, buf, 20, 3000)) == 20) {
+	memcpy(usr,buf,20);
+	if ((i=recv_nonb(sock, buf, 20,3000)) == 20) {
 		cc_decrypt(&recvblock, buf, 20);
 		//debugdump(buf, 20, "Recv SHA1 hash:");
-		if ( memcmp(buf, usr, 20)!=0 ) {
+		if ( memcmp(buf,usr,20)!=0 ) {
 			//debugf(" cc_connect_cli(): wrong sha1 hash from client! (%s)\n",ip2string(ip));
 			close(sock);
 			return NULL;
@@ -94,9 +109,9 @@ void *freecc_connect_cli(struct struct_clicon *param)
 	}
 
   // receive username
-	if ((i=recv_nonb(sock, buf, 20, 3000)) == 20) {
+	if ((i=recv_nonb(sock, buf, 20,3000)) == 20) {
 		cc_decrypt(&recvblock, buf, i);
-		memcpy(usr, buf, 20);
+		memcpy(usr,buf,20);
 		//debugf(" cc_connect_cli(): username '%s'\n", usr);
 	}
 	else {
@@ -151,7 +166,7 @@ void *freecc_connect_cli(struct struct_clicon *param)
   // receive passwd / 'CCcam'
 	strcpy( pwd, cfg.freecccam.pass);
 	cc_decrypt(&recvblock, (uint8*)pwd, strlen(pwd));
-	if ((i=recv_nonb(sock, buf, 6, 3000)) == 6) {
+	if ((i=recv_nonb(sock, buf, 6,3000)) == 6) {
 		cc_decrypt(&recvblock, buf, 6);
 		if (memcmp( buf+1, "Ccam\0",5)) {
 			debugf(" FreeCCcam: login failed from client(%s)\n",ip2string(ip));
@@ -242,7 +257,7 @@ void *freecc_connect_cli_thread(void *param)
 					SetSocketKeepalive(client_sock); 
 					clicondata->sock = client_sock; 
 					clicondata->ip = client_addr.sin_addr.s_addr;
-					create_prio_thread(&srv_tid, (threadfn)freecc_connect_cli, clicondata, 50);
+					create_prio_thread(&srv_tid, (threadfn)freecc_connect_cli,clicondata, 50);
 				}
 			}
 			else if (retval<0) usleep(30000);
@@ -279,11 +294,11 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 			cli->chkrecvtime = 0;
 			len = cc_msg_recv( cli->handle, &cli->recvblock, buf, 3);
 			if (len==0) {
-				debugf(" FreeCCcam: client(%s) read failed %d\n", cli->user, len);
+				debugf(" FreeCCcam: client(%s) read failed %d\n", cli->user,len);
 				cc_disconnect_cli(cli);
 			}
 			else if (len<0) {
-				debugf(" FreeCCcam: client(%s) read failed %d(%d)\n", cli->user, len, errno);
+				debugf(" FreeCCcam: client(%s) read failed %d(%d)\n", cli->user,len,errno);
 				cc_disconnect_cli(cli);
 			}
 			else if (len>0) {
@@ -324,7 +339,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 							cs->ecmdenied++;
 							// send decode failed
 							cc_msg_send( cli->handle, &cli->sendblock, CC_MSG_ECM_NOK2, 0, NULL);
-							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x Wrong CAID\n", cli->user, caid, provid, sid);
+							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x Wrong CAID\n", cli->user,caid,provid,sid);
 							break;
 						}
 						// Check for provid, accept provid==0
@@ -333,7 +348,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 							cs->ecmdenied++;
 							// send decode failed
 							cc_msg_send( cli->handle, &cli->sendblock, CC_MSG_ECM_NOK2, 0, NULL);
-							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x Wrong PROVIDER\n", cli->user, caid, provid, sid);
+							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x Wrong PROVIDER\n", cli->user,caid,provid,sid);
 							break;
 						}
 	
@@ -343,7 +358,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 							cs->ecmdenied++;
 							// send decode failed
 							cc_msg_send( cli->handle, &cli->sendblock, CC_MSG_ECM_NOK2, 0, NULL);
-							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x SID not accepted\n", cli->user, caid, provid, sid);
+							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x SID not accepted\n", cli->user,caid,provid,sid);
 							break;
 						}
 	
@@ -353,7 +368,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 							cs->ecmdenied++;
 							buf[1] = 0; buf[2] = 0;
 							cc_msg_send( cli->handle, &cli->sendblock, CC_MSG_ECM_NOK2, 0, NULL);
-							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x, ecm length error(%d)\n", cli->user, caid, provid, sid, len);
+							debugf(" <|> decode failed to CCcam client(%s) ch %04x:%06x:%04x, ecm length error(%d)\n", cli->user,caid,provid,sid,len);
 							break;
 						}
 	
@@ -380,7 +395,7 @@ void freecc_cli_recvmsg(struct cc_client_data *cli)
 							ecmid = store_ecmdata(cs->id, &data[0], len-17, sid, caid, provid);
 							ECM_DATA *ecm=getecmbyid(ecmid);
 							cc_store_ecmclient(ecmid, cli);
-							debugf(" <- ecm from CCcam client(%s) ch %04x:%06x:%04x (>%dms)\n", cli->user, caid, provid, sid, cli->ecm.dcwtime);
+							debugf(" <- ecm from CCcam client(%s) ch %04x:%06x:%04x (>%dms)\n", cli->user,caid,provid,sid, cli->ecm.dcwtime);
 							cli->ecm.busy=1;
 							cli->ecm.hash = ecm->hash;
 							cli->ecm.cardid = cs->id;

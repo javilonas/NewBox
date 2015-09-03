@@ -1,9 +1,24 @@
-#ifndef CSCRYPT_DES_H_
-#define CSCRYPT_DES_H_
-
-#ifdef  __cplusplus
-extern "C" {
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 #endif
+
+#ifndef _DES_H_
+#define _DES_H_
 
 #define CRYPT           0
 #define HASH            1
@@ -28,23 +43,20 @@ extern "C" {
 
 typedef unsigned char byte;
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif		/* __cplusplus */
+
 extern void EuroDes(byte key1[], byte key2[], byte DesMode, byte OperatingMode, 
                     byte data[]);
 extern int des_encrypt(byte *buffer, int len, byte *deskey);
 extern int des_decrypt(byte *buffer, int len, byte *deskey);
 extern void des_login_key_get(byte *key1, byte *key2, int len, byte *des16);
 
-	extern int des_encrypt(byte *buffer, int len, byte *deskey);
-	extern int des_decrypt(byte *buffer, int len, byte *deskey);
-	extern void des_login_key_get(byte *key1, byte *key2, int len, byte *des16);
-	extern void doPC1(unsigned char data[]);
-	extern void des_ede2_cbc_encrypt(byte *data, const byte *iv, const byte *okey1, const byte *okey2, int len);
-	extern void des_ede2_cbc_decrypt(byte *data, byte *iv, const byte *okey1, const byte *okey2, int len);
-	extern void des(byte key[], byte mode, byte data[]);
-
 #ifdef __cplusplus
 }
-#endif
+#endif		/* __cplusplus */
 
 extern void doPC1(byte data[]);
 extern void des(byte key[], byte mode, byte data[]);
@@ -52,6 +64,4 @@ extern void des(byte key[], byte mode, byte data[]);
 enum { ECM=0, ECS2=1, ECS3=2 };
 
 #endif
-
-
 

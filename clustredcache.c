@@ -1,8 +1,21 @@
-/////
-// Project: Multi Cardserver
-////
-// File: clustredcache.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 #include <stdio.h>
 
@@ -474,7 +487,7 @@ void cache_recvmsg()
 					req.sid = (buf[2]<<8) | buf[3];
 					req.onid = (buf[4]<<8) | buf[5];
 					req.caid = (buf[6]<<8) | buf[7];
-					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
+					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) |buf[11];
 					// Check Cache Request
 					if (!cache_check(&req)) break;
 					//
@@ -537,7 +550,7 @@ void cache_recvmsg()
 					req.sid = (buf[2]<<8) | buf[3];
 					req.onid = (buf[4]<<8) | buf[5];
 					req.caid = (buf[6]<<8) | buf[7];
-					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) | buf[11];
+					req.hash = (buf[8]<<24) | (buf[9]<<16) | (buf[10]<<8) |buf[11];
 					// Check Cache Request
 					if (!cache_check(&req)) {
 						//peer->rep_badfields++;
@@ -853,7 +866,7 @@ void cache_pipe_recvmsg()
 				req.sid = (buf[3]<<8) | buf[4];
 				req.onid = (buf[5]<<8) | buf[6];
 				req.caid = (buf[7]<<8) | buf[8];
-				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) | buf[12];
+				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) |buf[12];
 				// Check Cache Request
 				if (!cache_check(&req)) break;
 				//
@@ -881,7 +894,7 @@ void cache_pipe_recvmsg()
 				req.sid = (buf[3]<<8) | buf[4];
 				req.onid = (buf[5]<<8) | buf[6];
 				req.caid = (buf[7]<<8) | buf[8];
-				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) | buf[12];
+				req.hash = (buf[9]<<24) | (buf[10]<<16) | (buf[11]<<8) |buf[12];
 				// Check Cache Request
 				if (!cache_check(&req)) break;
 				//
@@ -1047,8 +1060,8 @@ void *cachepipe_thread(void *param)
 
 int start_thread_cache()
 {
-	create_prio_thread(&prg.tid_cache, (threadfn)cache_thread, NULL, 50);
-	create_prio_thread(&prg.tid_cache, (threadfn)cachepipe_thread, NULL, 20);
+	create_prio_thread(&prg.tid_cache, (threadfn)cache_thread,NULL, 50);
+	create_prio_thread(&prg.tid_cache, (threadfn)cachepipe_thread,NULL, 20);
 	return 0;
 }
 

@@ -1,33 +1,57 @@
-////
-// File: main.c
-/////
-
-#include "globals.h"
-#include "helpfunctions.h"
-#include "emulator.h"
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
+#include <linux/dvb/ca.h>
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
+#include <linux/ioctl.h>
+
 #include <sys/types.h>
+#include <fcntl.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+
 #include <netdb.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
 #include <termios.h>
 
 #include <errno.h>
 #include <sys/time.h>
 #include <pthread.h>
+#include <sched.h>
 #include <poll.h>
 
 #include <signal.h>
 
 #include <unistd.h>
 #include <sys/syscall.h>
-#include <sys/types.h>
-
+#include <sys/time.h>
 #include <sys/utsname.h>
+#include <sys/sysinfo.h>
 
 #include "common.h"
 #include "tools.h"
@@ -36,11 +60,12 @@
 #include "threads.h"
 #include "convert.h"
 
+#include "aes.h"
 #include "des.h"
-#include "bn.h"
-#include "idea.h"
 #include "md5.h"
 #include "sha1.h"
+#include "seca.h"
+#include "irdeto.h"
 
 #include "msg-newcamd.h"
 #ifdef CCCAM
@@ -55,14 +80,18 @@
 #include "config.h"
 #include "httpserver.h"
 
+#define CA_BASE		"/dev/dvb/adapter0/ca"
+#define DEMUX_BASE	"/dev/dvb/adapter0/demux"
+#define DEMUX_MAP	"/dev/dvb/adapter%d/demux0"
+
 #ifdef CFG
 char config_file[512] = CFG;
 #else
-char config_file[512] = "/var/etc/Newbox.cfg";
+char config_file[512] = "/var/etc/newbox.cfg";
 #endif
 
-char config_badcw[2048] = "/var/etc/badcw.cfg";
-char config_channelinfo[512] = "/var/etc/Newbox.channelinfo";
+char config_badcw[512] = "/var/etc/badcw.cfg";
+char config_channelinfo[512] = "/var/etc/newbox.channelinfo";
 
 char cccam_nodeid[8];
 
@@ -72,6 +101,8 @@ int flag_debugfile;
 char debug_file[256];
 char sms_file[256];
 
+///
+///
 struct config_data cfg;
 struct program_data prg;
 
@@ -105,12 +136,15 @@ int cmp_cards( struct cs_card_data* card1, struct cs_card_data* card2)
 
 	if (card1->caid!=card2->caid) return 0;
 
-/*
-	if ( ((card1->caid & 0xff00)==0x1800)
+
+/*	if ( ((card1->caid & 0xff00)==0x0100)
+		|| ((card1->caid & 0xff00)==0x1800)
+		|| ((card1->caid & 0xff00)==0x1810)
+		|| ((card1->caid & 0xff00)==0x0500)
 		|| ((card1->caid & 0xff00)==0x0900)
 		|| ((card1->caid & 0xff00)==0x0b00) ) return 1;
 */
-	if ( ((card1->caid & 0xff00)!=0x0100) && ((card1->caid & 0xff00)!=0x0500) ) return 1;
+	if ( ((card1->caid & 0xff00)!=0x0100) && ((card1->caid & 0xff00)!=0x1800) && ((card1->caid & 0xff00)!=0x1810) && ((card1->caid & 0xff00)!=0x0500) && ((card1->caid & 0xff00)!=0x0900) && ((card1->caid & 0xff00)!=0x0b00) ) return 1;
 
 	for(i=0; i<card1->nbprov;i++) {
 		found = 0;
@@ -220,7 +254,7 @@ int match_card( uint16 caid, uint32 prov, struct cs_card_data* card)
 {
 	if (caid!=card->caid) return 0;
 	// Dont care about provider for caid non via/seca
-	if ( ((card->caid & 0xff00)!=0x0100) && ((card->caid & 0xff00)!=0x0500) ) return 1;
+	if ( ((card->caid & 0xff00)!=0x0100) && ((card->caid & 0xff00)!=0x1800) && ((card->caid & 0xff00)!=0x1810) && ((card->caid & 0xff00)!=0x0500) && ((card->caid & 0xff00)!=0x0900) && ((card->caid & 0xff00)!=0x0b00) ) return 1;
 	int i;
 	for(i=0; i<card->nbprov;i++) if (prov==card->prov[i]) return 1;
 	return 0;
@@ -352,7 +386,10 @@ struct cardserver_data *getcsbycaidprov( uint16 caid, uint32 prov)
 	while (cs) {
 		if (cs->card.caid==caid) {
 			for(i=0; i<cs->card.nbprov;i++) if (cs->card.prov[i]==prov) return cs;
-			if ( ((cs->card.caid & 0xff00)==0x1800)
+			if ( ((cs->card.caid & 0xff00)==0x0100)
+				|| ((cs->card.caid & 0xff00)==0x1800)
+				|| ((cs->card.caid & 0xff00)==0x1810)
+				|| ((cs->card.caid & 0xff00)==0x0500)
 				|| ((cs->card.caid & 0xff00)==0x0900)
 				|| ((cs->card.caid & 0xff00)==0x0b00) ) return cs;
 		}
@@ -540,11 +577,10 @@ int mainprocess()
 	//debugf("release = %s\n", info.release);
 	//debugf("version = %s\n", info.version);
 	debugf("%s).\n\n", info.machine);
-	debugf("Copyright (C) 2014 developed by Javilonas.\n");
+	debugf("Copyright (C) 2014 - 2015 developed by Javilonas.\n");
 	debugf("This program is distributed under GPLv3.\n");
-        debugf("Source Code NewBox: https://github.com/javilonas/NewBox\n");
-	debugf("NewBox is based on Source Code MultiBox v0.4\n");
-	debugf("Visit http://www.lonasdigital.com for more details.\n\n");
+    debugf("Source Code NewBox: https://github.com/javilonas/NewBox\n");
+	debugf("Visit https://www.lonasdigital.com for more details.\n\n");
 
 // INIT
 	pthread_mutex_init(&prg.lock, NULL);
@@ -575,7 +611,7 @@ int mainprocess()
 	// Main Loops(THREADS)
 	pthread_mutex_init(&prg.lockdnsth, NULL); // DNS lookup Thread
 
-	pthread_mutex_init(&prg.locksrvth, NULL);	// Connection to cardservers
+	pthread_mutex_init(&prg.locksrvth, NULL); // Connection to cardservers
 	pthread_mutex_init(&prg.lockmain, NULL); // Messages Recv
 
 	pthread_mutex_init(&prg.locksrvcs, NULL); // CS Client connection
@@ -614,6 +650,8 @@ int mainprocess()
 	if ( check_config(&cfg) ) return -1;
 
 	read_chinfo(&prg);
+	
+	read_badcw(&prg);
 
 	init_ecmdata();
 
@@ -631,7 +669,7 @@ int mainprocess()
 
 	start_thread_cache();
 
-	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread, NULL, 50);
+	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread,NULL, 50);
 #ifdef RADEGAST_SRV
 	pthread_t rdgd_cli_tid;
 	create_prio_thread(&rdgd_cli_tid, (threadfn)rdgd_connect_cli_thread, NULL, 50); // Lock server
@@ -701,21 +739,7 @@ void install_handler (void)
 }
 #endif
 
-///
-static struct aes_keys cl_aes_keys;
-static uchar cl_ucrc[4];
-static unsigned char cl_user[128];
-static unsigned char cl_passwd[128];
-
-static int cl_sockfd;
-static struct sockaddr_in cl_socket;
-
-#define REQ_SIZE	584		// 512 + 20 + 0x34
-
-#define suppresscmd08 1
-
-//int main(int argc, char *argv[])
-int main(int argc, char**argv)
+int main(int argc, char *argv[])
 {
 	int option_background = 0; // default
 	int fork_return;
@@ -758,8 +782,8 @@ int main(int argc, char**argv)
 				printf("USAGE\n\tNewbox [-b] [-v] [-f] [-n] [-C <configfile>]\n\
 OPTIONS\n\
 \t-b               run in background\n\
-\t-C <configfile>  use <configfile> instead of default config file (/var/etc/Newbox.cfg)\n\
-\t-f               write to log file (/var/tmp/Newbox.log)\n\
+\t-C <configfile>  use <configfile> instead of default config file (/var/etc/newbox.cfg)\n\
+\t-f               write to log file (/var/tmp/newbox.log)\n\
 \t-n               print network packets\n\
 \t-v               print on screen\n\
 \t-h               this help message\n");
@@ -796,9 +820,6 @@ OPTIONS\n\
 		//else mainprocess();
 	}
 
-	unsigned char mbuf[20+1024];
-	unsigned char md5tmp[MD5_DIGEST_LENGTH];
-
 	prg.pid_main = getpid();
 
 	mainprocess();
@@ -834,3 +855,4 @@ OPTIONS\n\
 	}
 	return 0;
 }
+

@@ -1,16 +1,28 @@
-#include "globals.h"
-#include "helpfunctions.h"
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 #include "des.h"
 
-#define CRYPT           0
-#define HASH            1
-
-#define F_EURO_S2       0
-#define F_TRIPLE_DES    1
-
-#define TestBit(addr, bit) ((addr) & (1 << bit))
-
-static byte PC2[8][6] =
+static byte  PC2[8][6] = 
 {
     { 14, 17, 11, 24,  1,  5 },
     {  3, 28, 15,  6, 21, 10 },
@@ -23,7 +35,7 @@ static byte PC2[8][6] =
 };
 
 
-static byte E[8][6] =
+static byte  E[8][6] =
 {
     { 32,  1,  2,  3,  4,  5 },
     {  4,  5,  6,  7,  8,  9 },
@@ -522,7 +534,7 @@ void des_random_get(byte *buffer, byte len)
   }
 }
 
-#define CWS_NETMSGSIZE 400
+//#define CWS_NETMSGSIZE 300
 
 int des_encrypt(byte *buffer, int len, byte *deskey)
 {
@@ -534,7 +546,7 @@ int des_encrypt(byte *buffer, int len, byte *deskey)
 
   if (!deskey) return len;
   noPadBytes = (8 - ((len - 1) % 8)) % 8;
-  if (len + noPadBytes + 1 >= CWS_NETMSGSIZE-8) return -1;
+  //if (len + noPadBytes + 1 >= CWS_NETMSGSIZE-8) return -1;
   des_random_get(padBytes, noPadBytes);
   for (i = 0; i < noPadBytes; i++) buffer[len++] = padBytes[i];
   for (i = 2; i < len; i++) checksum ^= buffer[i];
@@ -546,7 +558,7 @@ int des_encrypt(byte *buffer, int len, byte *deskey)
     byte j;
     const byte flags = (1 << F_EURO_S2) | (1 << F_TRIPLE_DES);
     for(j=0; j<8; j++) buffer[i+j] ^= ivec[j];
-    EuroDes(deskey, deskey+8, flags, HASH, buffer+i);
+    EuroDes(deskey, deskey+8, flags, 1, buffer+i);
     memcpy(ivec, buffer+i, 8);
   }
   len += 8;
@@ -571,7 +583,7 @@ int des_decrypt(byte *buffer, int len, byte *deskey)
 
     memcpy(ivec, nextIvec, 8);
     memcpy(nextIvec, buffer+i, 8);
-    EuroDes(deskey, deskey+8, flags, CRYPT, buffer+i);
+    EuroDes(deskey, deskey+8, flags, 0, buffer+i);
     for(j=0; j<8; j++)
       buffer[i+j] ^= ivec[j];
   }

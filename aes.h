@@ -1,8 +1,28 @@
-#if defined(WITH_SSL) || defined(WITH_LIBCRYPTO)
-#  include <openssl/aes.h>
-#else
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
+
 #ifndef HEADER_AES_H
 #define HEADER_AES_H
+
+#ifdef OPENSSL_NO_AES
+#error AES is disabled.
+#endif
 
 #define AES_ENCRYPT	1
 #define AES_DECRYPT	0
@@ -12,10 +32,22 @@
 #define AES_MAXNR 14
 #define AES_BLOCK_SIZE 16
 
-# define GETU32(pt) (((uint32_t)(pt)[0] << 24) ^ ((uint32_t)(pt)[1] << 16) ^ ((uint32_t)(pt)[2] <<  8) ^ ((uint32_t)(pt)[3]))
-# define PUTU32(ct, st) { (ct)[0] = (uint8_t)((st) >> 24); (ct)[1] = (uint8_t)((st) >> 16); (ct)[2] = (uint8_t)((st) >>  8); (ct)[3] = (uint8_t)(st); }
+#ifdef  __cplusplus
+extern "C" {
+#endif
 
-#include <stdint.h>
+#if defined(_MSC_VER) && !defined(OPENSSL_SYS_WINCE)
+# define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)
+# define GETU32(p) SWAP(*((u32 *)(p)))
+# define PUTU32(ct, st) { *((u32 *)(ct)) = SWAP((st)); }
+#else
+# define GETU32(pt) (((u32)(pt)[0] << 24) ^ ((u32)(pt)[1] << 16) ^ ((u32)(pt)[2] <<  8) ^ ((u32)(pt)[3]))
+# define PUTU32(ct, st) { (ct)[0] = (u8)((st) >> 24); (ct)[1] = (u8)((st) >> 16); (ct)[2] = (u8)((st) >>  8); (ct)[3] = (u8)(st); }
+#endif
+
+typedef unsigned long u32;
+typedef unsigned short u16;
+typedef unsigned char u8;
 
 #define MAXKC   (256/32)
 #define MAXKB   (256/8)
@@ -26,10 +58,12 @@
 
 /* This should be a hidden type, but EVP requires that the size be known */
 struct aes_key_st {
-    uint32_t rd_key[4 *(AES_MAXNR + 1)];
+    unsigned long rd_key[4 *(AES_MAXNR + 1)];
     int rounds;
 };
 typedef struct aes_key_st AES_KEY;
+
+const char *AES_options(void);
 
 int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
 	AES_KEY *key);
@@ -41,6 +75,26 @@ void AES_encrypt(const unsigned char *in, unsigned char *out,
 void AES_decrypt(const unsigned char *in, unsigned char *out,
 	const AES_KEY *key);
 
-#endif /* !HEADER_AES_H */
+void AES_ecb_encrypt(const unsigned char *in, unsigned char *out,
+	const AES_KEY *key, const int enc);
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, const int enc);
+void AES_cfb128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num, const int enc);
+void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char *ivec, int *num);
+void AES_ctr128_encrypt(const unsigned char *in, unsigned char *out,
+	const unsigned long length, const AES_KEY *key,
+	unsigned char ivec[AES_BLOCK_SIZE],
+	unsigned char ecount_buf[AES_BLOCK_SIZE],
+	unsigned int *num);
 
+
+#ifdef  __cplusplus
+}
 #endif
+
+#endif /* !HEADER_AES_H */

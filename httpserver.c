@@ -1,12 +1,24 @@
-////
-// File: httpserver.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 #define HTTP_GET  0
 #define HTTP_POST 1
-
-#include "globals.h"
-#include "helpfunctions.h"
 
 #include <stdio.h>
 #include <unistd.h>
@@ -699,7 +711,7 @@ function start()\n\
 		i++;
 		if (i>=MAX_DBGLINES) i=0;
 	} while (i!=idbgline);
-	sprintf( http_buf, "</pre></fieldset><br><center>Copyright (C) 2014 developed by <a href='http://www.lonasdigital.com'><b>Javilonas</b></a>.\n <br>Followme on <a href='https://twitter.com/Javilonas'><b>Twitter</b></a> \n and\n <a href='https://github.com/javilonas'><b>Github</b></a></center></div><br>"); tcp_write(&tcpbuf, sock, http_buf, strlen(http_buf) );
+	sprintf( http_buf, "</pre></fieldset><br><center>Copyright (C) 2014 - 2015 developed by <a href='https://www.lonasdigital.com'><b>Javilonas</b></a>.\n <br>Followme on <a href='https://twitter.com/Javilonas'><b>Twitter</b></a> \n and\n <a href='https://github.com/javilonas'><b>Github</b></a></center></div><br>"); tcp_write(&tcpbuf, sock, http_buf, strlen(http_buf) );
 
 	tcp_write(&tcpbuf, sock, http_body_, strlen(http_body_) );
 	tcp_write(&tcpbuf, sock, http_html_, strlen(http_html_) );
@@ -1317,7 +1329,7 @@ void http_send_server(int sock, http_request *req)
 				tcp_writeecmdata(&tcpbuf, sock, srv->cstat[i].ecmok, srv->cstat[i].ecmnb );
 				//ECM TIME
 				int temp;
-				if (srv->cstat[i].ecmok) temp =  srv->cstat[i].ecmoktime/srv->cstat[i].ecmok; else temp=0;
+				if (srv->cstat[i].ecmok) temp = srv->cstat[i].ecmoktime/srv->cstat[i].ecmok; else temp=0;
 				if (temp)
 					sprintf( http_buf, "<td class=alt%d align=center>%dms</td>",alt, temp);
 				else
@@ -3498,7 +3510,7 @@ void *gererClient(int *param )
 			else { // send( client_sock, (char*)data, strlen(data),0);
 				//printf("%s\n", http_buf);
 				struct tcp_buffer_data tcpbuf;
-				char auth[] = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"NewBox\"\r\nVary: Accept-Encoding\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<HTML><HEAD><TITLE>NewBox</TITLE></HEAD><BODY><H2>Access forbidden, authorization required</H2></BODY></HTML>";
+				char auth[] = "HTTP/1.1 401 Unauthorized\r\nWWW-Authenticate: Basic realm=\"WebInterface\"\r\nVary: Accept-Encoding\r\nConnection: close\r\nContent-Type: text/html\r\n\r\n<HTML><HEAD><TITLE>WebInterface</TITLE></HEAD><BODY><H2>Access forbidden, authorization required</H2></BODY></HTML>";
 				tcp_init(&tcpbuf);
 				tcp_write(&tcpbuf, sock, auth, strlen(auth) );
 				tcp_flush(&tcpbuf, sock);

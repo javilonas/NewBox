@@ -1,6 +1,21 @@
-//////
-// File: cli-cccam.c
-//////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 
 struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32 id );
@@ -28,7 +43,7 @@ int cc_sendinfo_srv(struct cs_server_data *srv, int isnewbox)
 	uint8 buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
 	memcpy(buf, srv->user, 20);
-	memcpy(buf + 20, cfg.cccam.nodeid, 8);
+	memcpy(buf + 20, cfg.cccam.nodeid, 8 );
 	buf[28] = 0; //srv->wantemus;
 	memcpy(buf + 29, cfg.cccam.version, 32);	// cccam version (ascii)
 	memcpy(buf + 61, cfg.cccam.build, 32);	// build number (ascii)
@@ -246,7 +261,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 						srv->ecmerrdcw ++;
 						if (cs&&cardcheck) {
 							cardsids_update( srv->busycard, ecm->provid, ecm->sid, -1);
-							srv_cstatadd( srv, cs->id, 0 , 0);
+							srv_cstatadd( srv, cs->id, 0, 0);
 						}
 						ecm_setsrvflag(srv->busyecmid, srv->id, ECM_SRV_REPLY_FAIL);
 
@@ -262,7 +277,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 					ecm_setsrvflagdcw(srv->busyecmid, srv->id, ECM_SRV_REPLY_GOOD,dcw);
 					if (cs&&cardcheck) {
 						cardsids_update( srv->busycard, ecm->provid, ecm->sid, 1); /// + Card nodeID
-						srv_cstatadd( srv, cs->id, 1 , srv->lastecmoktime);
+						srv_cstatadd( srv, cs->id, 1, srv->lastecmoktime);
 					}
 					if (cardcheck) {
 						srv->busycard->ecmoktime += GetTickCount()-srv->lastecmtime;
@@ -346,7 +361,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 
 					if (cs) {
 						if ( istherecard( srv, srv->busycard ) ) cardsids_update( srv->busycard, ecm->provid, ecm->sid, -1);
-						srv_cstatadd( srv, cs->id, 0 , 0);
+						srv_cstatadd( srv, cs->id, 0, 0);
 					}
 					ecm_setsrvflag(srv->busyecmid, srv->id, ECM_SRV_REPLY_FAIL);
 
@@ -398,7 +413,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 						memset(card, 0, sizeof(struct cs_card_data) );
 						card->shareid = buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7];
 						card->uphops = buf[14]+1;
-						memcpy(card->nodeid, buf+26+buf[24]*7, 8);
+						memcpy( card->nodeid, buf+26+buf[24]*7, 8);
 						card->caid = (buf[12]<<8)+(buf[13]);
 						card->nbprov = buf[24];
 						card->sids = NULL;
@@ -462,7 +477,7 @@ int cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 		buf[10] = ecm->sid>>8;
 		buf[11] = ecm->sid&0xff;
 		buf[12] = ecm->ecmlen;
-		memcpy( &buf[13],&ecm->ecm[0], ecm->ecmlen );
+		memcpy( &buf[13],&ecm->ecm[0], ecm->ecmlen);
 
 		srv->lastecmtime = GetTickCount();
 		srv->busy = 1;

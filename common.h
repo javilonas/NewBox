@@ -1,11 +1,30 @@
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
+
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#define FD_SETSIZE2  4196 // 4096 default
+#define FD_SETSIZE2  4096
 
-#define DELAY_MAIN	10000
-#define DELAY_RECV	0
-#define DELAY_ACCEPT	100000
+#define DELAY_MAIN	 10000
+#define DELAY_RECV	 0
+#define DELAY_ACCEPT 100000
 
 
 #ifdef CCCAM_SRV
@@ -24,16 +43,16 @@
 #endif
 #endif
 
-#define DATE_BUILD    "16-10-2014"
-#define VERSION    "03"
-#define REVISION   03
+#define DATE_BUILD    "03-08-2015"
+#define VERSION    "05"
+#define REVISION   05
 
 #define FALSE 0
 #define TRUE 1
 
 typedef unsigned char uchar;
 typedef unsigned short int usint;
-//typedef unsigned int uint;
+typedef unsigned int uint;
 
 typedef unsigned char uint8;
 typedef unsigned short uint16;

@@ -1,6 +1,21 @@
-/////
-// File: config.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,7 +115,7 @@ int cc_build[] = { 2892, 2971, 3094, 3165, 0 };
 
 uint8 defdeskey[14] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14 };
 
-char *cc_version[] = { "2.0.9", "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "3.0.1", "" };
+char *cc_version[] = { "2.0.8", "2.0.9", "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "2.3.1", "3.0.1", "" };
 
 char *uppercase(char *str)
 {
@@ -145,7 +160,7 @@ void init_config(struct config_data *cfg)
 #ifdef CCCAM
 	//2.2.1 build 3316
 	strcpy(cfg->cccam.version, cc_version[0]);
-	sprintf(cfg->cccam.build, "%d", cc_build[0]);
+	sprintf( cfg->cccam.build, "%d", cc_build[0]);
 #endif
 
 #ifdef CCCAM_SRV
@@ -583,8 +598,8 @@ int read_config(struct config_data *cfg)
 					parse_int(str);
 					parse_spaces();
 					defaultcs.dcwtimeout = atoi(str);
-					if (defaultcs.dcwtimeout<300) defaultcs.dcwtimeout=300;
-					else if (defaultcs.dcwtimeout>9999) defaultcs.dcwtimeout=9999;
+					if (defaultcs.dcwtimeout<300) defaultcs.dcwtimeout=300; // default 300
+					else if (defaultcs.dcwtimeout>2500) defaultcs.dcwtimeout=2500; //default 9999
 				}
 				else if (!strcmp(str,"MAXFAILED")) {
 					parse_spaces();
@@ -596,7 +611,7 @@ int read_config(struct config_data *cfg)
 					parse_spaces();
 					defaultcs.maxfailedecm = atoi(str);
 					if (defaultcs.maxfailedecm<0) defaultcs.maxfailedecm=0;
-					else if (defaultcs.maxfailedecm>100) defaultcs.maxfailedecm=100;
+					else if (defaultcs.maxfailedecm>15) defaultcs.maxfailedecm=15; // default 100
 				}
 				else if ( (!strcmp(str,"TIME"))||(!strcmp(str,"MINTIME")) ) {
 					parse_spaces();
@@ -608,7 +623,7 @@ int read_config(struct config_data *cfg)
 					parse_spaces();
 					defaultcs.dcwtime = atoi(str);
 					if (defaultcs.dcwtime<0) defaultcs.dcwtime=0;
-					else if (defaultcs.dcwtime>500) defaultcs.dcwtime=500;
+					else if (defaultcs.dcwtime>200) defaultcs.dcwtime=200; // default 500
 				}
 #ifdef CHECK_NEXTDCW
 				else if (!strcmp(str,"CHECK")) {
@@ -643,7 +658,7 @@ int read_config(struct config_data *cfg)
 					parse_int(str);
 					defaultcs.csmax = atoi(str);
 					if (defaultcs.csmax<0) defaultcs.csmax=0;
-					else if (defaultcs.csmax>10) defaultcs.csmax=10;
+					else if (defaultcs.csmax>15) defaultcs.csmax=15; // default 10 - 10
 				}
 				else if (!strcmp(str,"INTERVAL")) {
 					parse_spaces();
@@ -654,7 +669,7 @@ int read_config(struct config_data *cfg)
 					parse_int(str);
 					defaultcs.csinterval = atoi(str);
 					if (defaultcs.csinterval<100) defaultcs.csinterval=100;
-					else if (defaultcs.csinterval>3000) defaultcs.csinterval=3000;
+					else if (defaultcs.csinterval>2000) defaultcs.csinterval=2000; // default 3000
 				}
 				else if (!strcmp(str,"VALIDECMTIME")) {
 					parse_spaces();
@@ -664,7 +679,7 @@ int read_config(struct config_data *cfg)
 					} else iparser++;
 					parse_int(str);
 					defaultcs.csvalidecmtime = atoi(str);
-					if (defaultcs.csvalidecmtime>5000) defaultcs.csvalidecmtime=5000;
+					if (defaultcs.csvalidecmtime>2000) defaultcs.csvalidecmtime=2000; // default 5000
 				}
 				else if (!strcmp(str,"FIRST")) {
 					parse_spaces();
@@ -674,8 +689,8 @@ int read_config(struct config_data *cfg)
 					} else iparser++;
 					parse_int(str);
 					defaultcs.csfirst = atoi(str);
-					if (defaultcs.csfirst<0) defaultcs.csfirst = 0;
-					else if (defaultcs.csfirst>5) defaultcs.csfirst = 5;
+					if (defaultcs.csfirst<0) defaultcs.csfirst=0;
+					else if (defaultcs.csfirst>3) defaultcs.csfirst=3; // default 5
 				}
 				else debugf(" config(%d,%d): profile variable expected\n",nbline,iparser-currentline);
 			}
@@ -702,7 +717,7 @@ int read_config(struct config_data *cfg)
 					parse_int(str);
 					defaultcs.ccretry = atoi(str);
 					if (defaultcs.ccretry<0) defaultcs.ccretry=0;
-					else if (defaultcs.ccretry>10) defaultcs.ccretry=10;
+					else if (defaultcs.ccretry>5) defaultcs.ccretry=5; // default 10
 				}
 				else debugf(" config(%d,%d): profile variable expected\n",nbline,iparser-currentline);
 			}
@@ -717,8 +732,8 @@ int read_config(struct config_data *cfg)
 					} else iparser++;
 					parse_int(str);
 					defaultcs.cachetimeout = atoi(str);
-					if (defaultcs.cachetimeout<0) defaultcs.cachetimeout = 0;
-					else if (defaultcs.cachetimeout>5000) defaultcs.cachetimeout = 5000;
+					if (defaultcs.cachetimeout<0) defaultcs.cachetimeout=0;
+					else if (defaultcs.cachetimeout>2000) defaultcs.cachetimeout=2000; // default 5000
 				}
 			}
 		}
@@ -809,8 +824,8 @@ int read_config(struct config_data *cfg)
 			struct cc_client_data *cli = malloc( sizeof(struct cc_client_data) );
 			memset(cli, 0, sizeof(struct cc_client_data) );
 			// init Default
-			cli->dcwtime = 0;
 			cli->dnhops = 0;
+			cli->dcwtime = 0;
 			cli->uphops = 0;
 			// <user> <pass> <downhops> <dcwtime> <uphops> { <CardserverPort>,... }
 			parse_str(cli->user);
@@ -821,7 +836,7 @@ int read_config(struct config_data *cfg)
 				if (parse_int(str)) {
 					cli->dcwtime = atoi(str);
 					if (cli->dcwtime<0) cli->dcwtime=0;
-					else if (cli->dcwtime>500) cli->dcwtime=500;
+					else if (cli->dcwtime>300) cli->dcwtime=300; // default 500
 					if (parse_int(str)) {
 						cli->uphops = atoi(str);
 					}
@@ -908,7 +923,7 @@ int read_config(struct config_data *cfg)
 						uppercase(str);
 						if (!strcmp(str,"NAME")) cli->realname = info->value;
 						else if (!strcmp(str,"ENDDATE")) {
-						    strptime(  info->value, "%Y-%m-%d", &cli->enddate);
+						    strptime( info->value, "%Y-%m-%d", &cli->enddate);
  						}
 						else if (!strcmp(str,"HOST")) {
 							cli->host = add_host(cfg,info->value);
@@ -1013,7 +1028,7 @@ int read_config(struct config_data *cfg)
 				parse_int(str);
 				cfg->freecccam.dcwtime = atoi(str);
 				if (cfg->freecccam.dcwtime<0) cfg->freecccam.dcwtime=0;
-				else if (cfg->freecccam.dcwtime>500) cfg->freecccam.dcwtime=500;
+				else if (cfg->freecccam.dcwtime>300) cfg->freecccam.dcwtime=300; // default 500
 
 			}
 			else if (!strcmp(str,"USERNAME")) {
@@ -1069,7 +1084,7 @@ int read_config(struct config_data *cfg)
 			if (parse_int(str)) {
 				cli->dcwtime = atoi(str);
 				if (cli->dcwtime<0) cli->dcwtime=0;
-				else if (cli->dcwtime>500) cli->dcwtime=500;
+				else if (cli->dcwtime>300) cli->dcwtime=300; // default 500
 			}
 
 			parse_spaces();
@@ -1268,13 +1283,13 @@ int read_config(struct config_data *cfg)
 				parse_int(str);
 				if (cardserver) {
 					cardserver->cachetimeout = atoi(str);
-					if (cardserver->cachetimeout<0) cardserver->cachetimeout = 0;
-					else if (cardserver->cachetimeout>5000) cardserver->cachetimeout = 5000;
+					if (cardserver->cachetimeout<0) cardserver->cachetimeout=0;
+					else if (cardserver->cachetimeout>3000) cardserver->cachetimeout=3000; // Default 
 				}
 				else {
 					defaultcs.cachetimeout = atoi(str);
-					if (defaultcs.cachetimeout<0) defaultcs.cachetimeout = 0;
-					else if (defaultcs.cachetimeout>5000) defaultcs.cachetimeout=5000;
+					if (defaultcs.cachetimeout<0) defaultcs.cachetimeout=0;
+					else if (defaultcs.cachetimeout>3000) defaultcs.cachetimeout=3000; // Default 
 				}
 			}
 			else if (!strcmp(str,"TRACKER")) {
@@ -1429,7 +1444,7 @@ int read_config(struct config_data *cfg)
 				parse_spaces();
 				cardserver->dcwtimeout = atoi(str);
 				if (cardserver->dcwtimeout<300) cardserver->dcwtimeout=300;
-				else if (cardserver->dcwtimeout>9999) cardserver->dcwtimeout=9999;
+				else if (cardserver->dcwtimeout>2500) cardserver->dcwtimeout=2500; // default 9999
 			}
 			else if (!strcmp(str,"MAXFAILED")) {
 				parse_spaces();
@@ -1453,7 +1468,7 @@ int read_config(struct config_data *cfg)
 				parse_spaces();
 				cardserver->dcwtime = atoi(str);
 				if (cardserver->dcwtime<0) cardserver->dcwtime=0;
-				else if (cardserver->dcwtime>500) cardserver->dcwtime=500;
+				else if (cardserver->dcwtime>200) cardserver->dcwtime=200; // default 500
 			}
 
 #ifdef CHECK_NEXTDCW
@@ -1494,7 +1509,7 @@ int read_config(struct config_data *cfg)
 				parse_int(str);
 				cardserver->csmax = atoi(str);
 				if (cardserver->csmax<0) cardserver->csmax=0;
-				else if (cardserver->csmax>10) cardserver->csmax=10;
+				else if (cardserver->csmax>15) cardserver->csmax=15; // default 10
 			}
 			else if (!strcmp(str,"INTERVAL")) {
 				parse_spaces();
@@ -1505,7 +1520,7 @@ int read_config(struct config_data *cfg)
 				parse_int(str);
 				cardserver->csinterval = atoi(str);
 				if (cardserver->csinterval<100) cardserver->csinterval=100;
-				else if (cardserver->csinterval>3000) cardserver->csinterval=3000;
+				else if (cardserver->csinterval>2000) cardserver->csinterval=2000; // default 3000
 			}
 			else if (!strcmp(str,"VALIDECMTIME")) {
 				parse_spaces();
@@ -1515,7 +1530,7 @@ int read_config(struct config_data *cfg)
 				} else iparser++;
 				parse_int(str);
 				cardserver->csvalidecmtime = atoi(str);
-				if (cardserver->csvalidecmtime>5000) cardserver->csvalidecmtime=5000;
+				if (cardserver->csvalidecmtime>3000) cardserver->csvalidecmtime=3000; // default 5000
 			}
 			else if (!strcmp(str,"FIRST")) {
 				parse_spaces();
@@ -1525,8 +1540,8 @@ int read_config(struct config_data *cfg)
 				} else iparser++;
 				parse_int(str);
 				cardserver->csfirst = atoi(str);
-				if (cardserver->csfirst<0) cardserver->csfirst = 0;
-				else if (cardserver->csfirst>5) cardserver->csfirst = 5;
+				if (cardserver->csfirst<0) cardserver->csfirst=0;
+				else if (cardserver->csfirst>5) cardserver->csfirst=5;
 			}
 			else debugf(" config(%d,%d): cardserver variable expected\n",nbline,iparser-currentline);
 		}
@@ -1890,7 +1905,6 @@ int read_config(struct config_data *cfg)
 }
 
 
-
 int read_chinfo( struct program_data *prg )
 {
 	FILE *fhandle;
@@ -1902,7 +1916,7 @@ int read_chinfo( struct program_data *prg )
 	uint32 prov;
 	int chncount = 0;
 
-	sprintf(fname, "/var/etc/Newbox.channelinfo");
+	sprintf(fname, "/var/etc/newbox.channelinfo");
 	// Open Config file
 	fhandle = fopen(fname,"rt");
 	if (fhandle==0) {
@@ -1960,6 +1974,23 @@ int read_chinfo( struct program_data *prg )
 	return 0;
 }
 
+int read_badcw( struct config_data *cfg )
+{
+	FILE *fhandle;
+	char fname[512];
+	int chncount = 0;
+	
+	sprintf(fname, "/var/etc/badcw.cfg");
+	// Open Config file
+	fhandle = fopen(fname,"rt");
+  if (fhandle==0) {
+    debugf(" config: parsing file '%s'\n",fname);
+    return -1;
+  }
+	fclose(fhandle);
+	debugf(" config: reading %d badcw.cfg.\n", chncount);
+	return 0;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -1,6 +1,21 @@
-
-#define CWS_FIRSTCMDNO     0xE0
-
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 #define EXT_OSD_MESSAGE    0xD1
 #define EXT_ADD_CARD       0xD3
@@ -8,7 +23,11 @@
 #define EXT_GET_VERSION    0xD6
 #define EXT_SID_LIST       0xD7
 
+#define CWS_NETMSGSIZE 600 //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
+#define NCD_CLIENT_ID 0x8888
+
+#define CWS_FIRSTCMDNO 0xe0
 typedef enum
 {
   MSG_CLIENT_2_SERVER_LOGIN = CWS_FIRSTCMDNO,
@@ -30,10 +49,16 @@ typedef enum
   MSG_ADMIN_COMMAND,
   MSG_ADMIN_COMMAND_ACK,
   MSG_ADMIN_COMMAND_NAK,
-  MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1d
+  MSG_KEEPALIVE = CWS_FIRSTCMDNO + 0x1d,
+  MSG_SERVER_2_CLIENT_OSD = 0xd1,
+  MSG_SERVER_2_CLIENT_ALLCARDS = 0xd2,
+  MSG_SERVER_2_CLIENT_ADDCARD = 0xd3,
+  MSG_SERVER_2_CLIENT_REMOVECARD = 0xd4,
+  MSG_SERVER_2_CLIENT_CHANGE_KEY = 0xd5,
+  MSG_SERVER_2_CLIENT_GET_VERSION = 0xd6,
+  MSG_SERVER_2_CLIENT_ADDSID = 0xd7,
+  MSG_CLIENT_2_SERVER_CARDDISCOVER = 0xd8
 } net_msg_type_t;
-
-#define CWS_NETMSGSIZE 728 //csp 0.8.9 (default: 400). This is CWS_NETMSGSIZE. The old default was 240
 
 struct cs_custom_data
 {

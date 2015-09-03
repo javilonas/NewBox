@@ -1,9 +1,24 @@
-////
-// File: th-ecm.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 
-#define MAXSRVTAB 512
+#define MAXSRVTAB 1024 //255
 
 struct srvtab_data
 {
@@ -169,14 +184,14 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 #endif
 			// Mgcamd
 #ifdef MGCAMD_SRV
-
+/*
 			struct mg_client_data *mgcli = cfg.mgcamd.client;
 			while (mgcli) {
 				if ( (mgcli->handle!=INVALID_SOCKET)&&(mgcli->ip==srvtab[j].srv->host->ip)&&(mgcli->ecm.busy)&&(mgcli->ecm.id==ecmid) ) break; // DELETE SERVER
 				mgcli = mgcli->next;
 			}
 			if (mgcli) continue;
-
+*/
 #endif
 			// ADD SERVER
 			if (i<j) memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
@@ -408,7 +423,7 @@ uint32 check_sendecm()
 				static char msg[] = "Invalid profile id";
 				ecm->statusmsg = msg;
 				ecm->dcwstatus = STAT_DCW_FAILED;
-				cs_dcw_check_time = 0;
+				cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 				mg_dcw_check_time = 0;
 #endif
@@ -432,7 +447,7 @@ uint32 check_sendecm()
 					static char msg[] = "Decode failed, max servers is reached and no more servers to wait";
 					ecm->statusmsg = msg;
 					ecm->dcwstatus = STAT_DCW_FAILED;
-					cs_dcw_check_time = 0;
+					cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 					mg_dcw_check_time = 0;
 #endif
@@ -458,7 +473,7 @@ uint32 check_sendecm()
 					static char msg[] = "Decode failed";
 					ecm->statusmsg = msg;
 					ecm->dcwstatus = STAT_DCW_FAILED;
-					cs_dcw_check_time = 0;
+					cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 					mg_dcw_check_time = 0;
 #endif
@@ -492,7 +507,7 @@ uint32 check_sendecm()
 							static char msg[] = "No servers found to decode";
 							ecm->statusmsg = msg;
 							ecm->dcwstatus = STAT_DCW_FAILED;
-							cs_dcw_check_time = 0;
+							cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 							mg_dcw_check_time = 0;
 #endif
@@ -544,7 +559,7 @@ uint32 check_sendecm()
 						if (newsrv->type==TYPE_NEWCAMD) {
 							if (cs_sendecm_srv(cs, newsrv, ecm)>0) {
 								ecm->lastsendtime = GetTickCount();
-								debugf(" -> ecm to server%d (%s:%d) ch %04x:%06x:%04x\n", nbservers, newsrv->host->name, newsrv->port, ecm->caid, ecm->provid, ecm->sid);
+								debugf(" -> ecm to server%d (%s:%d) ch %04x:%06x:%04x\n",nbservers,newsrv->host->name,newsrv->port,ecm->caid,ecm->provid,ecm->sid);
 								newsrv->lastecmtime = GetTickCount();
 								newsrv->ecmnb++;
 								newsrv->busy=1;
@@ -561,7 +576,7 @@ uint32 check_sendecm()
 						else if (newsrv->type==TYPE_CCCAM) {
 							if (cc_sendecm_srv(newsrv, ecm)>0) {
 								ecm->lastsendtime = GetTickCount();
-								debugf(" -> ecm to CCcam server%d (%s:%d) ch %04x:%06x:%04x\n", nbservers, newsrv->host->name, newsrv->port, ecm->caid, ecm->provid, ecm->sid);
+								debugf(" -> ecm to CCcam server%d (%s:%d) ch %04x:%06x:%04x\n",nbservers,newsrv->host->name,newsrv->port,ecm->caid,ecm->provid,ecm->sid);
 								newsrv->lastecmtime = GetTickCount();
 								newsrv->ecmnb++;
 								struct cs_card_data *card = cc_getcardbyid( newsrv, newsrv->busycardid );
@@ -582,7 +597,7 @@ uint32 check_sendecm()
 						else if (newsrv->type==TYPE_RADEGAST) {
 							if (rdgd_sendecm_srv(newsrv, ecm)>0) {
 								ecm->lastsendtime = GetTickCount();
-								debugf(" -> ecm to Radegast server%d (%s:%d) ch %04x:%06x:%04x\n", nbservers, newsrv->host->name, newsrv->port, ecm->caid, ecm->provid, ecm->sid);
+								debugf(" -> ecm to Radegast server%d (%s:%d) ch %04x:%06x:%04x\n",nbservers,newsrv->host->name,newsrv->port,ecm->caid,ecm->provid,ecm->sid);
 								newsrv->lastecmtime = GetTickCount();
 								newsrv->ecmnb++;
 								newsrv->busy=1;
@@ -604,7 +619,7 @@ uint32 check_sendecm()
 				static char msg[] = "no more time to send request";
 				ecm->statusmsg = msg;
 				ecm->dcwstatus = STAT_DCW_FAILED;
-				cs_dcw_check_time = 0;
+				cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 				mg_dcw_check_time = 0;
 #endif
@@ -829,7 +844,7 @@ void ecm_setdcw( struct cardserver_data *cs, ECM_DATA *ecm, uchar dcw[16], int s
 				}
 			}
 			// Send DCW to clients
-			cs_dcw_check_time = 0;
+			cs_dcw_check_time=0;
 #ifdef MGCAMD_SRV
 			mg_dcw_check_time = 0;
 #endif
@@ -1281,7 +1296,7 @@ void *recv_msg_thread(void *param)
 
 int start_thread_recv_msg()
 {
-	create_prio_thread(&prg.tid_msg, (threadfn)recv_msg_thread, NULL, 50);
+	create_prio_thread(&prg.tid_msg, (threadfn)recv_msg_thread,NULL, 50);
 	return 0;
 }
 

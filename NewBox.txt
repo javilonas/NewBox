@@ -1,4 +1,4 @@
-NewBox - CardServer v0.3 (Test)
+NewBox - CardServer v0.5
 ============================================
 
 Source Code: https://github.com/javilonas/NewBox
@@ -7,9 +7,9 @@ License
 =======
 
 NewBox: Open Source CAM
-Copyright (C) 2014 by Javilonas
+Copyright (C) 2014 - 2015 by Javilonas
 
-NewBox is based on Source Code MultiBox v.04.
+NewBox is based on Source Code MultiCS-r63.
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -32,4 +32,4 @@ Help and Support
 ================
 
 If you experience any problems with NewBox, feel free to post in our support
-forum under (mainly Spanish language) at: http://www.lonasdigital.com
+forum under (mainly Spanish language) at: https://www.lonasdigital.com

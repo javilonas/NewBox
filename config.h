@@ -1,10 +1,29 @@
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
+
 #define KEEPALIVE_NEWCAMD	80
 
 
 #if TARGET == 3
-#define MAX_SIDS 1280 // 1024 default
+#define MAX_SIDS 1024
 #else
-#define MAX_SIDS 4352 // 4096 default
+#define MAX_SIDS 4096
 #endif
 
 
@@ -31,9 +50,9 @@ struct sid_data
 
 
 #if TARGET == 3
-#define CARD_MAXPROV 48 // 16 default
+#define CARD_MAXPROV 24 // 16 default
 #else
-#define CARD_MAXPROV 64 // 32 default
+#define CARD_MAXPROV 32 // 32 default
 #endif
 
 struct cs_card_data
@@ -565,9 +584,10 @@ struct cc_client_data { // Connected Client
 struct cccam_server {
 #ifdef CCCAM_SRV
 	struct cc_client_data *client;
-	int handle;
-	int ipoll;
+	unsigned char key[16];
 	int port; // output port
+	SOCKET handle;
+	int ipoll;
 	unsigned short csport[MAX_CSPORTS]; // default cards
 	int dcwtime;
 #endif
@@ -805,7 +825,7 @@ struct program_data
 };
 
 extern char config_file[512];
-extern char config_badcw[2048];
+extern char config_badcw[512];
 extern char config_channelinfo[512];
 extern char cccam_nodeid[8];
 

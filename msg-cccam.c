@@ -1,29 +1,39 @@
-////
-// File: msg-cccam.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <netdb.h>
 #include <signal.h>
-#include <netdb.h> 
-#include <string.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <errno.h>
-#include <pthread.h>
 
+#include "md5.h"
+#include "sha1.h"
 #include "common.h"
-#include "des.h"
 #include "debug.h"
-#include "sockets.h"
 #include "msg-cccam.h"
+#include "sockets.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,7 +54,7 @@ void cc_crypt_init( struct cc_crypt_block *block, uint8 *key, int len)
 
   for (i=0; i<256; i++) {
     j += key[i % len] + block->keytable[i];
-    cc_crypt_swap(&block->keytable[i], &block->keytable[j]);
+    SWAPC(&block->keytable[i], &block->keytable[j]);
   }
 
   block->state = *key;
@@ -76,7 +86,7 @@ void cc_decrypt(struct cc_crypt_block *block, uint8 *data, int len)
   for (i = 0; i < len; i++) {
     block->counter++;
     block->sum += block->keytable[block->counter];
-    cc_crypt_swap(&block->keytable[block->counter], &block->keytable[block->sum]);
+    SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
     z = data[i];
     data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
     z = data[i];
@@ -96,7 +106,7 @@ void cc_encrypt(struct cc_crypt_block *block, uint8 *data, int len)
   for (i = 0; i < len; i++) {
     block->counter++;
     block->sum += block->keytable[block->counter];
-    cc_crypt_swap(&block->keytable[block->counter], &block->keytable[block->sum]);
+    SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
     z = data[i];
     data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
     block->state = block->state ^ z;
@@ -125,7 +135,6 @@ void cc_crypt_cw(uint8 *nodeid/*client node id*/, uint32 card_id, uint8 *cws)
     //printf("(%d) n=%02x, tmp=%02x, cw=%02x\n",i,n,tmp,cws[i]); 
   }
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -186,7 +195,6 @@ int cc_msg_recv(int handle,struct cc_crypt_block *recvblock, uint8 *buf, int tim
 	memcpy(buf, netbuf, len);
 	return len;
 }
-
 
 
 

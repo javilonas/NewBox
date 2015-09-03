@@ -1,4 +1,23 @@
-#define MAX_ECM_DATA 4352 // 4096 default
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
+
+#define MAX_ECM_DATA 5096 // 4096 default
 
 #define ECM_SRV_REQUEST     0
 #define ECM_SRV_REPLY_GOOD  1
@@ -41,12 +60,12 @@ typedef struct {
 	uint16 caid;				// CA id
 	uint32 provid;				// Provider
 	int ecmlen;
-	uint8 ecm[350];
+	uint8 ecm[512];
 	uint32 crc;
 	uint32 hash;
 	// DCW/Status
 	dcwstatus_type dcwstatus;
-	uint8 cw[16];
+	uint8 cw[32];
 	// DCW SOURCE
 	int dcwsrctype;
 	int dcwsrcid;
@@ -62,7 +81,7 @@ typedef struct {
 	// Last Successive ECM/DCW
 	struct {	
 		int status; //0: nothing, 1: found last decode, -1:error dont search
-		uint8 dcw[16];
+		uint8 dcw[32];
 		int error;
         int ecmid;
         int counter; // successif dcw counter * -1:error, 0: not found, 1: found and checked 1 time, 2: found and checked 2 times ...
@@ -76,7 +95,7 @@ typedef struct {
 		unsigned int statustime; // Last Status Time
 		uint32 srvid; // Server ID 0=nothing
 		int flag; // 0=request , 1=reply, 2: excluded(like cccam)
-		uint8 dcw[16];
+		uint8 dcw[32];
 	} server[20]; 
 
 	int waitcache; // 1: Wait for Cache; 0: dont wait
@@ -105,14 +124,14 @@ int ecm_addsrv(ECM_DATA *ecm, unsigned srvid);
 int ecm_nbsentsrv(ECM_DATA *ecm);
 int ecm_nbwaitsrv(ECM_DATA *ecm);
 int ecm_setsrvflag(int ecmid, unsigned int srvid, int flag);
-int ecm_setsrvflagdcw(int ecmid, unsigned int srvid, int flag, uchar dcw[16]);
+int ecm_setsrvflagdcw(int ecmid, unsigned int srvid, int flag, uchar dcw[32]);
 int ecm_getsrvflag(int ecmid, unsigned int srvid);
 int ecm_getreplysrvid(int ecmid);
 
 int search_ecmdata_bycw( unsigned char *cw, uint32 hash, unsigned short sid, unsigned short caid, unsigned int provid);
 
 #ifdef CHECK_NEXTDCW
-int checkfreeze_setdcw( int ecmid, uchar dcw[16] );
+int checkfreeze_setdcw( int ecmid, uchar dcw[32] );
 #endif
 
 extern int srvmsgid;

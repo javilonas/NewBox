@@ -1,12 +1,26 @@
-////
-// File: srv-cccam.c
-/////
+#if 0
+# 
+# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Contact: javilonas@esp-desarrolladores.com
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+#endif
 
 
-void cc_disconnect_cli(struct cc_client_data *cli);
 void *cc_connect_cli_thread(void *param);
 void cc_cli_recvmsg(struct cc_client_data *cli);
-uint cc_check_sendcw();
+
 
 struct cc_client_data *getcccamclientbyid(uint32 id)
 {
@@ -25,15 +39,13 @@ struct cc_client_data *getcccamclientbyid(uint32 id)
 
 void cc_disconnect_cli(struct cc_client_data *cli)
 {
-	if (cli->handle!=INVALID_SOCKET) {
+	if (cli->handle>0) {
 		debugf(" CCcam: client '%s' disconnected \n", cli->user);
 		close(cli->handle);
 		cli->handle = INVALID_SOCKET;
 		cli->uptime += GetTickCount()-cli->connected;
-		cli->connected = 0;
 	}
 }
-
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -336,10 +348,10 @@ void *cc_connect_cli(struct struct_clicon *param)
 
 	// send cli data ack
 	cc_msg_send( sock, &cli->sendblock, CC_MSG_CLI_INFO, 0, NULL);
-	cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL); //test
+	//cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
 	int sendversion = ( (cli->version[28]=='W')&&(cli->version[29]='H')&&(cli->version[30]='O') );
 	cc_sendinfo_cli(cli, sendversion);
-	cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL); // test
+	//cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
 	cli->cardsent = 1;
 	//TODO: read from client packet CC_MSG_BAD_ECM
 	//len = cc_msg_recv(cli->handle, &cli->recvblock, buf, 3);
@@ -479,13 +491,14 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 						}
 						// Check for caid, accept caid=0
 						if ( !accept_caid(cs,caid) ) {
-							cli->ecmdenied++;
 							cs->ecmdenied++;
+							cli->ecmdenied++;
 							// send decode failed
 							cc_msg_send( cli->handle, &cli->sendblock, CC_MSG_ECM_NOK2, 0, NULL);
 							debugf(" <|> decode failed to CCcam client '%s' ch %04x:%06x:%04x Wrong CAID\n", cli->user, caid, provid, sid);
 							break;
 						}
+
 						// Check for provid, accept provid==0
 						if ( !accept_prov(cs,provid) ) {
 							cli->ecmdenied++;
@@ -517,6 +530,10 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 						}
 	
 						// ACCEPTED
+						//cs->ecmaccepted++;
+						//cli->ecmaccepted++;
+
+						// XXX: check ecm tag = 0x80,0x81
 						memcpy( &data[0], &buf[17], len-17);
 
 						pthread_mutex_lock(&prg.lockecm);
@@ -531,7 +548,7 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 							debugf(" <- ecm from CCcam client '%s' ch %04x:%06x:%04x*\n", cli->user, caid, provid, sid);
 							cli->ecm.busy=1;
 							cli->ecm.hash = ecm->hash;
-							cli->ecm.cardid = cs->id;
+							cli->ecm.cardid = cardid;
 						}
 						else {
 							cs->ecmaccepted++;
@@ -542,7 +559,7 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 							debugf(" <- ecm from CCcam client '%s' ch %04x:%06x:%04x (>%dms)\n", cli->user, caid, provid, sid, cli->ecm.dcwtime);
 							cli->ecm.busy=1;
 							cli->ecm.hash = ecm->hash;
-							cli->ecm.cardid = cs->id;
+							cli->ecm.cardid = cardid;
 							if (cs->usecache && cfg.cachepeer) {
 								pipe_send_cache_find(ecm, cs);
 								ecm->waitcache = 1;
