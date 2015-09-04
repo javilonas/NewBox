@@ -366,7 +366,7 @@ void cache_send_resendreq(struct cache_data *pcache,struct cs_cachepeer_data *pe
 void cache_send_ping(struct cs_cachepeer_data *peer)
 {
 // 03 00 00 01 2F EE B1 CB 54 00 00 D8 03 
-	unsigned char buf[64]; //32 default
+	unsigned char buf[128]; //32 default
 	struct timeval tv;
 	gettimeofday( &tv, NULL );
 	buf[0] = TYPE_PINGREQ;
@@ -398,6 +398,7 @@ void cache_send_ping(struct cs_cachepeer_data *peer)
 	buf[27] = 0;
 	buf[28] = 0;
 	sendtopeer( peer, buf, 29);
+
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -473,8 +474,8 @@ void cache_recvmsg()
 					}
 					peer->lastactivity = ticks;
 					//peer->totreq++;
-					// Check Multics r69/r72/r77/r81
-					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r69",peer->version)||!strcmp("r72",peer->version)||!strcmp("r77",peer->version)||!strcmp("r81",peer->version)) ) break;
+					// Check Multics diferent version
+					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r63",peer->version)||!strcmp("r64",peer->version)||!strcmp("r65",peer->version)||!strcmp("r66",peer->version)||!strcmp("r67",peer->version)||!strcmp("r68",peer->version)||!strcmp("r69",peer->version)||!strcmp("r70",peer->version)||!strcmp("r71",peer->version)||!strcmp("r72",peer->version)||!strcmp("r73",peer->version)||!strcmp("r74",peer->version)||!strcmp("r75",peer->version)||!strcmp("r76",peer->version)||!strcmp("r77",peer->version)||!strcmp("r78",peer->version)||!strcmp("r79",peer->version)||!strcmp("r80",peer->version)||!strcmp("r81",peer->version)||!strcmp("r82",peer->version)||!strcmp("r83",peer->version)||!strcmp("r84",peer->version)||!strcmp("r85",peer->version)) ) break;
 					// Check CSP
 					if (received==20) { // arbiter number
 						strcpy(peer->program,"CSP");
@@ -533,8 +534,8 @@ void cache_recvmsg()
 					peer->lastactivity = ticks;
 
 					//peer->totrep++;
-					// Check Multics r69/r72/r77/r81
-					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r69",peer->version)||!strcmp("r72",peer->version)||!strcmp("r77",peer->version)||!strcmp("r81",peer->version)) ) break;
+					// Check Multics diferent version
+					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r63",peer->version)||!strcmp("r64",peer->version)||!strcmp("r65",peer->version)||!strcmp("r66",peer->version)||!strcmp("r67",peer->version)||!strcmp("r68",peer->version)||!strcmp("r69",peer->version)||!strcmp("r70",peer->version)||!strcmp("r71",peer->version)||!strcmp("r72",peer->version)||!strcmp("r73",peer->version)||!strcmp("r74",peer->version)||!strcmp("r75",peer->version)||!strcmp("r76",peer->version)||!strcmp("r77",peer->version)||!strcmp("r78",peer->version)||!strcmp("r79",peer->version)||!strcmp("r80",peer->version)||!strcmp("r81",peer->version)||!strcmp("r82",peer->version)||!strcmp("r83",peer->version)||!strcmp("r84",peer->version)||!strcmp("r85",peer->version)) ) break;
 
 					// Check Status
 					if (peer->disabled) break;
@@ -582,7 +583,7 @@ void cache_recvmsg()
 							memcpy(pcache->cw, buf+13, 16);
 							pcache->status = CACHE_STAT_DCW;
 							if (pcache->sendpipe) {
-								uchar buf[64]; // 32 por defecto
+								uchar buf[128]; // 32 por defecto
 								buf[0] = PIPE_CACHE_FIND_SUCCESS;
 								buf[1] = 11+2+16; // Data length
 								buf[2] = pcache->tag;
@@ -619,7 +620,7 @@ void cache_recvmsg()
 							memcpy(pcache->cw, buf+13, 16);
 							pcache->status = CACHE_STAT_DCW;
 
-							uchar buf[64]; // 32 por defecto
+							uchar buf[128]; // 32 por defecto
 							buf[0] = PIPE_CACHE_FIND_SUCCESS;
 							buf[1] = 11+2+16; // Data length
 							buf[2] = pcache->tag;
@@ -747,8 +748,8 @@ void cache_recvmsg()
 					if (!peer) break;
 
 					peer->lastactivity = ticks;
-					// Check Multics r69/r72/r77/r81
-					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r69",peer->version)||!strcmp("r72",peer->version)||!strcmp("r77",peer->version)||!strcmp("r81",peer->version)) ) break;
+					// Check Multics diferent version
+					if ( !strcmp("MultiCS",peer->program) && (!strcmp("r63",peer->version)||!strcmp("r64",peer->version)||!strcmp("r65",peer->version)||!strcmp("r66",peer->version)||!strcmp("r67",peer->version)||!strcmp("r68",peer->version)||!strcmp("r69",peer->version)||!strcmp("r70",peer->version)||!strcmp("r71",peer->version)||!strcmp("r72",peer->version)||!strcmp("r73",peer->version)||!strcmp("r74",peer->version)||!strcmp("r75",peer->version)||!strcmp("r76",peer->version)||!strcmp("r77",peer->version)||!strcmp("r78",peer->version)||!strcmp("r79",peer->version)||!strcmp("r80",peer->version)||!strcmp("r81",peer->version)||!strcmp("r82",peer->version)||!strcmp("r83",peer->version)||!strcmp("r84",peer->version)||!strcmp("r85",peer->version)) ) break;
 					// Check Status
 					if (peer->disabled) break;
 

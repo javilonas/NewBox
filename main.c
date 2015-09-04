@@ -569,8 +569,11 @@ int mainprocess()
 {
 	struct utsname info;
 	gettimeofday( &startime, NULL );
+  	debugf("\n");
+  	debugf("Starting NewBox...\n");
 	debugf("\n");
-	debugf("NewBox v%s, build %s ", VERSION, DATE_BUILD);
+	debugf("\n");
+	debugf("CardServer NewBox v%s, build %s ", VERSION, DATE_BUILD);
 	gettimeofday( uname(&info), NULL );
 	debugf("(%s-", info.sysname);
 	//debugf("nodename = %s\n", info.nodename);
@@ -669,7 +672,7 @@ int mainprocess()
 
 	start_thread_cache();
 
-	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread,NULL, 50);
+	create_prio_thread(&cli_tid, (threadfn)cs_connect_cli_thread, NULL, 50);
 #ifdef RADEGAST_SRV
 	pthread_t rdgd_cli_tid;
 	create_prio_thread(&rdgd_cli_tid, (threadfn)rdgd_connect_cli_thread, NULL, 50); // Lock server
@@ -779,7 +782,7 @@ int main(int argc, char *argv[])
 		args = *(argv+i);
 		if (args[0]=='-') {
 			if (args[1]=='h') {
-				printf("USAGE\n\tNewbox [-b] [-v] [-f] [-n] [-C <configfile>]\n\
+				printf("USAGE\n\tnewbox [-b] [-v] [-f] [-n] [-C <configfile>]\n\
 OPTIONS\n\
 \t-b               run in background\n\
 \t-C <configfile>  use <configfile> instead of default config file (/var/etc/newbox.cfg)\n\

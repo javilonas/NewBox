@@ -168,7 +168,6 @@ int SetSocketTimeout(int connectSocket, int milliseconds)
     return setsockopt (connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
 }
 
-
 /* Disable the Nagle (TCP No Delay) algorithm */
 int SetSocketNoDelay(int sock)
 {

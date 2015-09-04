@@ -84,10 +84,12 @@ int cc_connect_srv(struct cs_server_data *srv, int fd)
 
 	// Check newbox
 	int isnewbox = 0;
-	uchar a = (data[0]^'M') + data[1] + data[2];
-	uchar b = data[4] + (data[5]^'C') + data[6];
-	uchar c = data[8] + data[9] + (data[10]^'S');
-	if ( (a==data[3])&&(b==data[7])&&(c==data[11]) ) isnewbox = 1;
+	uchar a = (data[0]^'N') + data[1] + data[2];
+	uchar b = data[4] + (data[5]^'B') + data[6];
+	uchar c = data[8] + data[9] + (data[10]^'x');
+	if ( (a==data[3])&&(b==data[7])&&(c==data[11]) ) {
+		isnewbox = 1;
+	}
 
 	cc_crypt_xor(data);  // XOR init bytes with 'CCcam'
 
@@ -104,7 +106,7 @@ int cc_connect_srv(struct cs_server_data *srv, int fd)
 	cc_crypt_init(&srv->sendblock, data, 16);
 	cc_decrypt(&srv->sendblock, hash, 20);
 
-	cc_msg_send( fd, &srv->sendblock, CC_MSG_NO_HEADER, 20,hash);   // send crypted hash to server
+	cc_msg_send( fd, &srv->sendblock, CC_MSG_NO_HEADER, 20, hash);   // send crypted hash to server
 	memset(buf, 0, sizeof(buf));
 	memcpy(buf, srv->user, 20);
 	//debugf(" CCcam: username '%s'\n",srv->username);
