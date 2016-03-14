@@ -45,11 +45,11 @@ void cs_disconnect_srv(struct cs_server_data *srv)
 	}
 }
 
-int cs_connect_srv(struct cs_server_data *srv, int fd)
+int32_t cs_connect_srv(struct cs_server_data *srv, int32_t fd)
 {
 	char passwdcrypt[120];
 	unsigned char keymod[14];
-	int i,index,len;
+	int32_t i,index,len;
 	unsigned char buf[CWS_NETMSGSIZE];
 	unsigned char sessionkey[16];
 	// INIT
@@ -64,13 +64,14 @@ int cs_connect_srv(struct cs_server_data *srv, int fd)
 		return -1;
 	}
 	// Check newbox
-	int isnewbox = 0;
+	int32_t isnewbox = 0;
 	uchar a = (keymod[0]^'N') + keymod[1] + keymod[2];
 	uchar b = keymod[4] + (keymod[5]^'B') + keymod[6];
 	uchar c = keymod[8] + keymod[9] + (keymod[10]^'x');
-	if ( (a==keymod[3])&&(b==keymod[7])&&(c==keymod[11]) ) {
+	if ( (a==keymod[3])&&(b==keymod[7])&&(c==keymod[11]) ) isnewbox = 1;
+	/*if ( (a==keymod[3])&&(b==keymod[7])&&(c==keymod[11]) ) {
 		isnewbox = 1;
-	}
+	}*/
 
 	//debugdump(keymod,14,"Recv DES Key: ");
 	des_login_key_get(keymod, srv->key, 14, sessionkey);  
@@ -80,7 +81,7 @@ int cs_connect_srv(struct cs_server_data *srv, int fd)
 	struct cs_custom_data clicd; // Custom data
 	memset( &clicd, 0, sizeof(clicd));
 	//clicd.sid =  0x4343; // CCcam
-	clicd.sid =  cfg.newcamdclientid; // Mgcamd
+	clicd.sid = cfg.newcamdclientid; // Mgcamd
 
 	index = 3;
 	buf[0] = MSG_CLIENT_2_SERVER_LOGIN;
@@ -200,7 +201,7 @@ int cs_connect_srv(struct cs_server_data *srv, int fd)
 ///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 
-int cs_sendecm_srv(struct cardserver_data *cs, struct cs_server_data *srv, ECM_DATA *ecm)
+int32_t cs_sendecm_srv(struct cardserver_data *cs, struct cs_server_data *srv, ECM_DATA *ecm)
 {
 	unsigned char buf[CWS_NETMSGSIZE];
 	struct cs_custom_data srvcd; // Custom data
@@ -220,7 +221,7 @@ int cs_sendecm_srv(struct cardserver_data *cs, struct cs_server_data *srv, ECM_D
 void cs_srv_recvmsg(struct cs_server_data *srv)
 {
 	struct cs_custom_data srvcd; // Custom data
-	int len;
+	int32_t len;
 	ECM_DATA *ecm;
 	unsigned char buf[CWS_NETMSGSIZE];
 

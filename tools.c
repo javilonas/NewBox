@@ -41,31 +41,31 @@ struct timeval startime;
 
 unsigned int GetTickCount()
 {
-    struct timeval tv;
-    gettimeofday( &tv, NULL );
-    // this will rollover ~ every 49.7 days
-    return (unsigned int)( (tv.tv_sec-startime.tv_sec) * 1000 + tv.tv_usec / 1000);
+	struct timeval tv;
+	gettimeofday( &tv, NULL );
+	// this will rollover ~ every 49.7 days
+	return (unsigned int)( (tv.tv_sec-startime.tv_sec) * 1000 + tv.tv_usec / 1000);
 }
 
 unsigned int GetuTickCount()
 {
-    struct timeval tv;
-    gettimeofday( &tv, NULL );
-    // this will rollover ~ every 49.7 days
-    return (unsigned int)( (tv.tv_sec-startime.tv_sec) * 1000000 + tv.tv_usec);
+	struct timeval tv;
+	gettimeofday( &tv, NULL );
+	// this will rollover ~ every 49.7 days
+	return (unsigned int)( (tv.tv_sec-startime.tv_sec) * 1000000 + tv.tv_usec);
 }
 
 unsigned int GetTicks(struct timeval *tv)
 {
-    return (unsigned int)( (tv->tv_sec-startime.tv_sec) * 1000 + tv->tv_usec/1000 );
+	return (unsigned int)( (tv->tv_sec-startime.tv_sec) * 1000 + tv->tv_usec/1000 );
 }
 
 unsigned int getseconds()
 {
-    struct timeval tv;
-    gettimeofday( &tv, NULL );
-    // this will rollover ~ every 49.7 days
-    return (unsigned int)(tv.tv_sec-startime.tv_sec);
+	struct timeval tv;
+	gettimeofday( &tv, NULL );
+	// this will rollover ~ every 49.7 days
+	return (unsigned int)(tv.tv_sec-startime.tv_sec);
 }
 
 

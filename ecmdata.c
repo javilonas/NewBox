@@ -41,7 +41,7 @@
 
 ECM_DATA ecmdata[MAX_ECM_DATA];
 
-int srvmsgid = 0;
+int32_t srvmsgid = 0;
 
 
 void init_ecmdata()
@@ -49,53 +49,53 @@ void init_ecmdata()
 	memset(ecmdata, 0, sizeof(ecmdata));
 }
 
-uint32 ecm_crc( uchar *ecm, int ecmlen)
+uint32 ecm_crc( uchar *ecm, int32_t ecmlen)
 {
-  uchar checksum[4];
-  int counter;
-  
-  checksum[3]= ecm[0];
-  checksum[2]= ecm[1];
-  checksum[1]= ecm[2];
-  checksum[0]= ecm[3];
-  for ( counter=1; counter< (ecmlen/4) - 4; counter++)
-  {
-    checksum[3] ^=ecm[counter*4];
-    checksum[2] ^=ecm[counter*4+1];
-    checksum[1] ^=ecm[counter*4+2];
-    checksum[0] ^=ecm[counter*4+3];
-  }
-  return ( (checksum[3]<<24) | (checksum[2]<<16) | (checksum[1]<<8) | checksum[0] );
+	uchar checksum[4];
+	int32_t counter;
+
+	checksum[3]= ecm[0];
+	checksum[2]= ecm[1];
+	checksum[1]= ecm[2];
+	checksum[0]= ecm[3];
+	for ( counter=1; counter< (ecmlen/4) - 4; counter++)
+	{
+		checksum[3] ^=ecm[counter*4];
+		checksum[2] ^=ecm[counter*4+1];
+		checksum[1] ^=ecm[counter*4+2];
+		checksum[0] ^=ecm[counter*4+3];
+	}
+	return ( (checksum[3]<<24) | (checksum[2]<<16) | (checksum[1]<<8) | checksum[0] );
 }
 
-unsigned int hashCode( unsigned char *buf, int count)
+unsigned int hashCode( unsigned char *buf, int32_t count)
 {
-	int h = 0;
-	int i;
-    for (i = 0; i < count; i++) h = 31*h + buf[i];
-    return h;
+	int32_t h = 0;
+	int32_t i;
+	for (i = 0; i < count; i++) h = 31*h + buf[i];
+	return h;
 }
 
-ECM_DATA *getecmbyid(int id)
+ECM_DATA *getecmbyid(int32_t id)
 {
 	return &ecmdata[id];
 }
 
 
-int prevecmid( int ecmid )
+int32_t prevecmid( int32_t ecmid )
 {
 	if (ecmid<1) ecmid = MAX_ECM_DATA-1; else ecmid--; 
 	return ecmid;
 }
 
-int nextecmid( int ecmid )
+int32_t nextecmid( int32_t ecmid )
 {
 	ecmid++; if (ecmid>=MAX_ECM_DATA) ecmid=0;
 	return ecmid;
 }
 
 #ifdef CHECK_NEXTDCW
-void checkfreeze_storeECM(int ecmid);
+void checkfreeze_storeECM(int32_t ecmid);
 #endif
 
 int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned short caid, unsigned int provid)
@@ -105,7 +105,7 @@ int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned 
 	// Check Ecm
 	if ( ecmdata[srvmsgid].recvtime && (ecmdata[srvmsgid].recvtime+30000>ticks) ) {
 		debugf(" Cannot store ecm request\n");
-		return -1;		
+		return -1;
 	}
 	memset( &ecmdata[srvmsgid], 0, sizeof(ECM_DATA) );
 	memcpy( ecmdata[srvmsgid].ecm, ecm, ecmlen);
@@ -123,8 +123,7 @@ int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned 
 	memset( &ecmdata[srvmsgid].server, 0, sizeof(ecmdata[srvmsgid].server) );
 	ecmdata[srvmsgid].waitcache = 0;
 	ecmdata[srvmsgid].cachestatus = ECM_CACHE_NONE;
-
-	//ecmdata[srvmsgid].dcwsrvtype = DCW_SOURCE_NONE;
+	ecmdata[srvmsgid].dcwsrctype = DCW_SOURCE_NONE;
 
 #ifdef CHECK_NEXTDCW
 	checkfreeze_storeECM(srvmsgid);
@@ -132,12 +131,12 @@ int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned 
 
 	return srvmsgid;
 }
-	
-#define TIME_ECMALIVE 90000 // 60000
 
-int search_ecmdata( uchar *ecm, int ecmlen, unsigned short sid)
+#define TIME_ECMALIVE 100000 // 60000
+
+int32_t search_ecmdata( uchar *ecm, int32_t ecmlen, unsigned short sid)
 {
-	int i;
+	int32_t i;
 	uint32 ticks = GetTickCount();
 	uint32 crc = ecm_crc(ecm, ecmlen);
 	for (i=0; i<MAX_ECM_DATA; i++) {
@@ -146,11 +145,11 @@ int search_ecmdata( uchar *ecm, int ecmlen, unsigned short sid)
 		if (crc==ecmdata[i].crc) return i;
 	}
 	return -1;
-}  
+}
 
-int search_ecmdata_bymsgid( int msgid )
+int32_t search_ecmdata_bymsgid( int32_t msgid )
 {
-	int i;
+	int32_t i;
 	uint32 ticks = GetTickCount();
 	for (i=0; i<MAX_ECM_DATA; i++) {
 		if ( (ticks-ecmdata[i].recvtime) < TIME_ECMALIVE )
@@ -161,7 +160,7 @@ int search_ecmdata_bymsgid( int msgid )
 
 int search_ecmdata_dcw( uchar *ecm, int ecmlen, unsigned short sid)
 {
-	int i;
+	int32_t i;
 	uint32 ticks = GetTickCount();
 	uint32 crc = ecm_crc(ecm, ecmlen);
 	for (i=0; i<MAX_ECM_DATA; i++) {
@@ -173,11 +172,11 @@ int search_ecmdata_dcw( uchar *ecm, int ecmlen, unsigned short sid)
 		if ( !memcmp(ecm, ecmdata[i].ecm, ecmlen) ) return i;
 	}
 	return -1;
-}  
+}
 
-int search_ecmdata_byhash( uint32 hash )
+int32_t search_ecmdata_byhash( uint32 hash )
 {
-	int i;
+	int32_t i;
 	uint32 ticks = GetTickCount();
 	for (i=0; i<MAX_ECM_DATA; i++) {
 		if ( (ticks-ecmdata[i].recvtime) < TIME_ECMALIVE )
@@ -190,7 +189,7 @@ int search_ecmdata_byhash( uint32 hash )
 
 int ecm_addsrv(ECM_DATA *ecm, unsigned int srvid)
 {
-	int i;
+	int32_t i;
 	uint32 ticks = GetTickCount();
 	for(i=0; i<20; i++) {
 		if (!ecm->server[i].srvid) {
@@ -204,10 +203,10 @@ int ecm_addsrv(ECM_DATA *ecm, unsigned int srvid)
 	return 0;
 }
 
-int ecm_nbservers(ECM_DATA *ecm)
+int32_t ecm_nbservers(ECM_DATA *ecm)
 {
-	int i;
-	int count=0;
+	int32_t i;
+	int32_t count=0;
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
 			count++;
@@ -217,10 +216,10 @@ int ecm_nbservers(ECM_DATA *ecm)
 }
 
 
-int ecm_nbsentsrv(ECM_DATA *ecm)
+int32_t ecm_nbsentsrv(ECM_DATA *ecm)
 {
-	int i;
-	int count=0;
+	int32_t i;
+	int32_t count=0;
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
 			if (ecm->server[i].flag!=ECM_SRV_EXCLUDE) count++;
@@ -229,10 +228,10 @@ int ecm_nbsentsrv(ECM_DATA *ecm)
 	return count;
 }
 
-int ecm_nbwaitsrv(ECM_DATA *ecm)
+int32_t ecm_nbwaitsrv(ECM_DATA *ecm)
 {
-	int i;
-	int count=0;
+	int32_t i;
+	int32_t count=0;
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
 			if (ecm->server[i].flag==ECM_SRV_REQUEST) count++;
@@ -243,7 +242,7 @@ int ecm_nbwaitsrv(ECM_DATA *ecm)
 
 int ecm_setsrvflag(int ecmid, unsigned int srvid, int flag)
 {
-	int i;
+	int32_t i;
 	ECM_DATA *ecm = getecmbyid(ecmid);
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
@@ -259,7 +258,7 @@ int ecm_setsrvflag(int ecmid, unsigned int srvid, int flag)
 
 int ecm_setsrvflagdcw(int ecmid, unsigned int srvid, int flag, uchar dcw[16])
 {
-	int i;
+	int32_t i;
 	ECM_DATA *ecm = getecmbyid(ecmid);
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
@@ -276,7 +275,7 @@ int ecm_setsrvflagdcw(int ecmid, unsigned int srvid, int flag, uchar dcw[16])
 
 int ecm_getsrvflag(int ecmid, unsigned int srvid)
 {
-	int i;
+	int32_t i;
 	ECM_DATA *ecm = getecmbyid(ecmid);
 	for(i=0; i<20; i++) {
 		if (ecm->server[i].srvid) {
@@ -288,9 +287,9 @@ int ecm_getsrvflag(int ecmid, unsigned int srvid)
 	return 0;
 }
 
-int ecm_getreplysrvid(int ecmid)
+int32_t ecm_getreplysrvid(int32_t ecmid)
 {
-	int i;
+	int32_t i;
 	ECM_DATA *ecm = getecmbyid(ecmid);
 	for(i=0; i<20; i++)
 		if ( ecm->server[i].srvid && (ecm->server[i].flag==ECM_SRV_REPLY_GOOD) ) return ecm->server[i].srvid;
@@ -303,7 +302,7 @@ int ecm_getreplysrvid(int ecmid)
 
 int search_ecmdata_bycw( unsigned char *cw, uint32 hash, unsigned short sid, unsigned short caid, unsigned int provid)
 {
-	int i;
+	int32_t i;
 	for (i=0; i<MAX_ECM_DATA; i++) {
 		if (ecmdata[i].dcwstatus==STAT_DCW_SUCCESS)
 		if (provid==ecmdata[i].provid)
@@ -328,7 +327,7 @@ int search_ecmdata_bycw( unsigned char *cw, uint32 hash, unsigned short sid, uns
 */
 
 // Get Last DCW for the same Channel
-void checkfreeze_storeECM(int ecmid)
+void checkfreeze_storeECM(int32_t ecmid)
 {
 	// find after storing ecm
 	ECM_DATA *ecm = getecmbyid(ecmid);
@@ -338,7 +337,7 @@ void checkfreeze_storeECM(int ecmid)
 
 	if ( (ecm->lastdecode.status==0)&&(ecm->dcwstatus!=STAT_DCW_SUCCESS) ) {
 		//debugf(" \n[SROTE ECM] New (%04x:%06x:%04x/%08x)\n",ecm->caid, ecm->provid, ecm->sid, ecm->hash);
-		int oldecmid = ecmid;
+		int32_t oldecmid = ecmid;
 		while ( (oldecmid=prevecmid(oldecmid)) != ecmid ) {
 			ECM_DATA *oldecm = getecmbyid(oldecmid);
 			if (!oldecm) break;
@@ -378,20 +377,20 @@ void checkfreeze_storeECM(int ecmid)
 }
 
 // return 0:wrong dcw, 1: good dcw
-int checkfreeze_setdcw( int ecmid, uchar dcw[16] )
+int32_t checkfreeze_setdcw( int32_t ecmid, uchar dcw[16] )
 {
 	char nullcw[8] = "\0\0\0\0\0\0\0\0";
 	ECM_DATA *ecm = getecmbyid(ecmid);
 	if (!ecm) return 1;
 	if (ecm->lastdecode.status!=1) return 1; // no old successful decode
 
-/*
+
 	char str1[512];
 	char str2[512];
 	array2hex( ecm->lastdecode.dcw, str1, 16);
 	array2hex( dcw, str2, 16);
 	debugf(" \n[SET DCW] (%04x:%06x:%04x/%08x) Cntr:%d\nOLD[%s] -- NEW[%s]\n",ecm->caid, ecm->provid, ecm->sid, ecm->hash, ecm->lastdecode.counter, str1, str2);
-*/
+
 	if (ecm->lastdecode.counter<3) {
 		// Check consecutif cw
 		if ( memcmp(dcw,ecm->lastdecode.dcw,16) && ( !memcmp(dcw,ecm->lastdecode.dcw,8)||!memcmp(dcw+8,ecm->lastdecode.dcw+8,8) ) )

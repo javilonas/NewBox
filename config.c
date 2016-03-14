@@ -1,6 +1,6 @@
 #if 0
 # 
-# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Copyright (c) 2014 - 2016 Javier Sayago <admin@lonasdigital.com>
 # Contact: javilonas@esp-desarrolladores.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -111,15 +111,17 @@ void free_allhosts( struct config_data *cfg )
 ///////////////////////////////////////////////////////////////////////////////
 
 // Default Newcamd DES key 
-int cc_build[] = { 2892, 2971, 3094, 3165, 0 };
+int32_t cc_build[] = { 2816, 2892, 2971, 3094, 3165, 3191, 3290, 3316, 3367, 0 };
+int32_t freecc_build[] = { 2816, 2892, 2971, 3094, 3165, 3191, 3290, 3316, 3367, 0 };
 
 uint8 defdeskey[14] = { 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x11, 0x12, 0x13, 0x14 };
 
-char *cc_version[] = { "2.0.8", "2.0.9", "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "2.3.1", "3.0.1", "" };
+static char *cc_version[] = { "2.0.9", "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "" };
+static char *freecc_version[] = { "2.0.9", "2.0.11", "2.1.1", "2.1.2", "2.1.3", "2.1.4", "2.2.0", "2.2.1", "2.3.0", "" };
 
-char *uppercase(char *str)
+static char *uppercase(char *str)
 {
-	int i;
+	int32_t i;
 	for(i=0;;i++) {
 		switch(str[i]) {
 			case 'a'...'z':
@@ -143,7 +145,10 @@ void init_config(struct config_data *cfg)
 	cfg->serverid = 1;
 	cfg->cardserverid = 0x64; // Start like in CCcam 
 	cfg->cachepeerid = 1;
+	cfg->newcamdclientid = 1;
 	cfg->mgcamdclientid = 1;
+	cfg->cccamclientid = 1;
+	cfg->freecccamclientid = 1;
 
 #ifdef HTTP_SRV
 	cfg->http.port = 5500;
@@ -161,10 +166,19 @@ void init_config(struct config_data *cfg)
 	//2.2.1 build 3316
 	strcpy(cfg->cccam.version, cc_version[0]);
 	sprintf( cfg->cccam.build, "%d", cc_build[0]);
+
+	cfg->cccam.client = NULL;
+	memcpy(cfg->cccam.nodeid, cccam_nodeid, 8);
+	cfg->cccam.handle = INVALID_SOCKET;
+	cfg->cccam.port = 0;
+	cfg->cccam.dcwtime = 0;
 #endif
 
 #ifdef CCCAM_SRV
-	cfg->cccamclientid = 1;
+	//2.2.1 build 3316
+	strcpy(cfg->cccam.version, cc_version[0]);//"2.0.11");
+	sprintf(cfg->cccam.build, "%d", cc_build[0]);
+
 	cfg->cccam.client = NULL;
 	memcpy(cfg->cccam.nodeid, cccam_nodeid, 8);
 	cfg->cccam.handle = INVALID_SOCKET;
@@ -174,11 +188,11 @@ void init_config(struct config_data *cfg)
 
 #ifdef FREECCCAM_SRV
 	//2.2.1 build 3316
-	strcpy(cfg->freecccam.version, cc_version[0]);//"2.0.11");
-	sprintf(cfg->freecccam.build, "%d", cc_build[0]);
+	strcpy(cfg->freecccam.version, freecc_version[0]);//"2.0.11");
+	sprintf(cfg->freecccam.build, "%d", freecc_build[0]);
 
 	cfg->freecccam.client = NULL;
-	memcpy(cfg->freecccam.nodeid, cccam_nodeid, 8);
+	memcpy(cfg->freecccam.nodeid, freecccam_nodeid, 8);
 	cfg->freecccam.handle = INVALID_SOCKET;
 	cfg->freecccam.port = 0;
 	cfg->freecccam.dcwtime = 0;
@@ -207,21 +221,22 @@ void init_cardserver(struct cardserver_data *cs)
 
 	cs->port = 8000;
 
-	cs->csmax = 0;		// Max cs per ecm ( 0:unlimited )
-	cs->csinterval = 1000;	// interval between 2 same ecm to diffrent cs
+	cs->csmax = 0; // Max cs per ecm ( 0:unlimited )
+	cs->csinterval = 1000; // interval between 2 same ecm to diffrent cs
 	cs->cstimeout = 2000; // timeout for resending ecm to cs
 	cs->cstimeperecm = 0; // min time to do a request
 	cs->csvalidecmtime = 0; // cardserver max ecm reply time
-	//cs->ccretry = 0; // Max number of retries for CCcam servers
+	cs->ccretry = 0; // Max number of retries for CCcam servers
 
 	// Flags
 	cs->faccept0sid = 1;
 	cs->faccept0provider = 1;
 	cs->faccept0caid = 1;
-	cs->fallowcccam = 1;    // Allow cccam server protocol to decode ecm
-	cs->fallownewcamd = 1;  // Allow newcamd server protocol to decode ecm
+	cs->fallowcccam = 1; // Allow cccam server protocol to decode ecm
+	cs->fallowmgcamd = 1; // Allow mgcamd server protocol to decode ecm
+	cs->fallownewcamd = 1; // Allow newcamd server protocol to decode ecm
 	cs->fallowradegast = 1;
-	cs->fmaxuphops = 3;     // allowed cards distance to decode ecm
+	cs->fmaxuphops = 3; // allowed cards distance to decode ecm
 	cs->cssendcaid = 1;
 	cs->cssendprovid = 1;
 	cs->cssendsid = 1;
@@ -247,16 +262,16 @@ struct global_user_data
 };
 
 
-int read_config(struct config_data *cfg)
+int32_t read_config(struct config_data *cfg)
 {
-	int len,i;
+	int32_t len,i;
 	char str[255];
 	FILE *fhandle;
-	int nbline = 0;
+	int32_t nbline = 0;
 	struct cardserver_data *cardserver = NULL; // Must be pointer for local server pointing
 	struct cs_client_data *usr;
 	struct cs_server_data *srv;
-	int err = 0; // no error
+	int32_t err = 0; // no error
 	struct cardserver_data defaultcs;
 
 	struct global_user_data *guser=NULL;
@@ -266,7 +281,7 @@ int read_config(struct config_data *cfg)
 	if (fhandle==0) {
 		debugf(" file not found '%s'\n",config_file);
 		return -1;
-	} 
+	}
 	debugf(" config: parsing file '%s'\n",config_file);
 	// Init defaultcs
 	init_cardserver(&defaultcs);
@@ -278,7 +293,7 @@ int read_config(struct config_data *cfg)
 			char *pos;
 			// Remove Comments
 			pos = currentline;
-			while (*pos) { 
+			while (*pos) {
 				if (*pos=='#') {
 					*pos=0;
 					break;
@@ -287,7 +302,7 @@ int read_config(struct config_data *cfg)
 			}
 			// delete from the end '\r' '\n' ' ' '\t'
 			pos = currentline + strlen(currentline) - 1 ;
-			while ( (*pos=='\r')||(*pos=='\n')||(*pos=='\t')||(*pos==' ') ) { 
+			while ( (*pos=='\r')||(*pos=='\n')||(*pos=='\t')||(*pos==' ') ) {
 				*pos=0; pos--;
 				if (pos<=currentline) break;
 			}
@@ -352,7 +367,7 @@ int read_config(struct config_data *cfg)
 			tsrv.host = add_host(cfg, str);
 			parse_int(str);
 			tsrv.port = atoi( str );
-			int lastport = 0;
+			int32_t lastport = 0;
 			// Check for CWS
 			parse_spaces();
 			if (*iparser==':') {
@@ -366,7 +381,7 @@ int read_config(struct config_data *cfg)
 					debugf(" config(%d,%d): Error reading DES-KEY\n",nbline,iparser-currentline);
 					err++;
 					break;
-				} 
+				}
 				else {
 					tsrv.key[i] = hex2int(str);
 				}
@@ -381,7 +396,7 @@ int read_config(struct config_data *cfg)
 				while (i<MAX_CSPORTS) {
 					if ( parse_int(str)>0 ) {
 						tsrv.csport[i] = atoi(str);
-						int j;
+						int32_t j;
 						for (j=0; j<i; j++) if ( tsrv.csport[j] && (tsrv.csport[j]==tsrv.csport[i]) ) break;
 						if (j>=i) i++; else tsrv.csport[i] = 0;
 					}
@@ -403,7 +418,7 @@ int read_config(struct config_data *cfg)
 				cfg->server = srv;
 			}
 		}
-/*
+
 		if (!strcmp(str,"N")) {
 			parse_spaces();
 			if (*iparser!=':') {
@@ -424,7 +439,7 @@ int read_config(struct config_data *cfg)
 					debugf(" config(%d,%d): Error reading DES-KEY\n",nbline,iparser-currentline);
 					err++;
 					break;
-				} 
+				}
 				else {
 					srv->key[i] = hex2int(str);
 				}
@@ -440,7 +455,7 @@ int read_config(struct config_data *cfg)
 				while (i<MAX_CSPORTS) {
 					if ( parse_int(str)>0 ) {
 						srv->csport[i] = atoi(str);
-						int j;
+						int32_t j;
 						for (j=0; j<i; j++) if ( srv->csport[j] && (srv->csport[j]==srv->csport[i]) ) break;
 						if (j>=i) i++; else srv->csport[i] = 0;
 					}
@@ -457,7 +472,7 @@ int read_config(struct config_data *cfg)
 			srv->next = cfg->server;
 			cfg->server = srv;
 		}
-*/
+
 #ifdef RADEGAST_CLI
 		//R: host port caid providers
 		else if (!strcmp(str,"R")) {
@@ -494,7 +509,7 @@ int read_config(struct config_data *cfg)
 			cfg->server = srv;
 		}
 #endif
-		else if (!strcmp(str,"NEWCAMD")) {
+		else if (!strcmp(str,"IDSERVER")) {
 			parse_name(str);
 			uppercase(str);
 			if (!strcmp(str,"CLIENTID")) {
@@ -507,7 +522,22 @@ int read_config(struct config_data *cfg)
 				cfg->newcamdclientid = hex2int(str);
 			}
 		}
-
+/*#ifdef CCCAM_SRV
+		else if (!strcmp(str,"CCCAM")) {
+			parse_name(str);
+			uppercase(str);
+			if (!strcmp(str,"CLIENTID")) {
+				parse_spaces();
+				if (*iparser!=':') {
+					debugf(" config(%d,%d): ':' expected\n",nbline,iparser-currentline);
+					continue;
+				} else iparser++;
+				parse_hex(str);
+				//cfg->newcamdclientid = hex2int(str);
+				cfg->cccamclientid = hex2int(str);
+			}
+		}
+#endif*/
 #ifdef HTTP_SRV
 		else if (!strcmp(str,"HTTP")) {
 			parse_name(str);
@@ -551,13 +581,13 @@ int read_config(struct config_data *cfg)
 			} else iparser++;
 			struct dcw_data *dcw = malloc( sizeof(struct dcw_data) );
 			memset(dcw,0,sizeof(struct dcw_data) );
-			int error = 0;
+			int32_t error = 0;
 			for(i=0; i<16; i++)
 				if ( parse_hex(str)!=2 ) {
 					debugf(" config(%d,%d): Error reading BAD-DCW\n",nbline,iparser-currentline);
 					error++;
 					break;
-				} 
+				}
 				else {
 					dcw->dcw[i] = hex2int(str);
 				}
@@ -795,7 +825,7 @@ int read_config(struct config_data *cfg)
 				while (i<MAX_CSPORTS) {
 					if ( parse_int(str)>0 ) {
 						srv->csport[i] = atoi(str);
-						int j;
+						int32_t j;
 						for (j=0; j<i; j++) if ( srv->csport[j] && (srv->csport[j]==srv->csport[i]) ) break;
 						if (j>=i) i++; else srv->csport[i] = 0;
 					}
@@ -862,7 +892,7 @@ int read_config(struct config_data *cfg)
 							}
 							// check for port
 							cli->csport[i] = atoi(str);
-							int j;
+							int32_t j;
 							for (j=0; j<i; j++) if ( cli->csport[j] && (cli->csport[j]==cli->csport[i]) ) break;
 							if (j>=i) i++; else cli->csport[i] = 0;
 						}
@@ -889,8 +919,8 @@ int read_config(struct config_data *cfg)
 							while (i<MAX_CSPORTS) {
 								if ( parse_int(str)>0 ) {
 									// check for port
-									int n = cli->csport[i] = atoi(str);
-									int j;
+									int32_t n = cli->csport[i] = atoi(str);
+									int32_t j;
 									for (j=0; j<i; j++) if ( cli->csport[j] && (cli->csport[j]==n) ) break;
 									if (j>=i) { 
 										cli->csport[i] = n;
@@ -923,14 +953,14 @@ int read_config(struct config_data *cfg)
 						uppercase(str);
 						if (!strcmp(str,"NAME")) cli->realname = info->value;
 						else if (!strcmp(str,"ENDDATE")) {
-						    strptime( info->value, "%Y-%m-%d", &cli->enddate);
- 						}
+							strptime( info->value, "%Y-%m-%d", &cli->enddate);
+						}
 						else if (!strcmp(str,"HOST")) {
 							cli->host = add_host(cfg,info->value);
- 						}
+						}
 						info = info->next;
 					}
-				}	
+				}
 				if (*iparser!='}') debugf(" config(%d,%d): '}' expected\n",nbline,iparser-currentline);
 			}
 
@@ -1001,7 +1031,29 @@ int read_config(struct config_data *cfg)
 		else if (!strcmp(str,"FREECCCAM")) {
 			parse_name(str);
 			uppercase(str);
-			if (!strcmp(str,"PORT")) {
+			if (!strcmp(str,"VERSION")) {
+				parse_spaces();
+				if (*iparser!=':') {
+					debugf(" config(%d,%d): ':' expected\n",nbline,iparser-currentline);
+					continue;
+				} else iparser++;
+				parse_str(str);
+				for(i=0; cc_version[i]; i++)
+					if ( !strcmp(freecc_version[i],str) ) {
+						strcpy(cfg->freecccam.version,freecc_version[i]);
+						sprintf(cfg->freecccam.build, "%d", freecc_build[i]);
+						break;
+					}
+			}
+			else if (!strcmp(str,"NODEID")) {
+				parse_spaces();
+				if (*iparser!=':') {
+					debugf(" config(%d,%d): ':' expected\n",nbline,iparser-currentline);
+					continue;
+				} else iparser++;
+				if ( parse_hex(str)==16 ) hex2array( str, cfg->freecccam.nodeid );
+			}
+			else if (!strcmp(str,"PORT")) {
 				parse_spaces();
 				if (*iparser!=':') {
 					debugf(" config(%d,%d): ':' expected\n",nbline,iparser-currentline);
@@ -1097,7 +1149,7 @@ int read_config(struct config_data *cfg)
 						if ( parse_int(str)>0 ) {
 							// check for port
 							cli->csport[i] = atoi(str);
-							int j;
+							int32_t j;
 							for (j=0; j<i; j++) if ( cli->csport[j] && (cli->csport[j]==cli->csport[i]) ) break;
 							if (j>=i) i++; else cli->csport[i] = 0;
 						}
@@ -1124,8 +1176,8 @@ int read_config(struct config_data *cfg)
 							while (i<MAX_CSPORTS) {
 								if ( parse_int(str)>0 ) {
 									// check for port
-									int n = cli->csport[i] = atoi(str);
-									int j;
+									int32_t n = cli->csport[i] = atoi(str);
+									int32_t j;
 									for (j=0; j<i; j++) if ( cli->csport[j] && (cli->csport[j]==n) ) break;
 									if (j>=i) { 
 										cli->csport[i] = n;
@@ -1158,14 +1210,14 @@ int read_config(struct config_data *cfg)
 						uppercase(str);
 						if (!strcmp(str,"NAME")) cli->realname = info->value;
 						else if (!strcmp(str,"ENDDATE")) {
-						    strptime(  info->value, "%Y-%m-%d", &cli->enddate);
- 						}
+							strptime(  info->value, "%Y-%m-%d", &cli->enddate);
+						}
 						else if (!strcmp(str,"HOST")) {
 							cli->host = add_host(cfg,info->value);
- 						}
+						}
 						info = info->next;
 					}
-				}	
+				}
 				if (*iparser!='}') debugf(" config(%d,%d): '}' expected\n",nbline,iparser-currentline);
 			}
 
@@ -1196,7 +1248,7 @@ int read_config(struct config_data *cfg)
 						memset( cfg->mgcamd.key, 0, 16 );
 						debugf(" config(%d,%d): Error reading DES-KEY\n",nbline,iparser-currentline);
 						break;
-					} 
+					}
 					else {
 						cfg->mgcamd.key[i] = hex2int(str);
 					}
@@ -1601,7 +1653,7 @@ int read_config(struct config_data *cfg)
 				cardserver->port = atoi(str);
 				defaultcs.port = cardserver->port;
 				if (defaultcs.port) defaultcs.port++;
-			}			
+			}
 		}
 #ifdef RADEGAST_SRV
 		else if (!strcmp(str,"RADEGAST")) {
@@ -1719,6 +1771,14 @@ int read_config(struct config_data *cfg)
 				} else iparser++;
 				if (parse_bin(str)) cardserver->fallowcccam = str[0]=='0';
 			}
+			if (!strcmp(str,"MGCAMD")) {
+				parse_spaces();
+				if (*iparser!=':') {
+					debugf(" config(%d,%d): ':' expected\n",nbline,iparser-currentline);
+					continue;
+				} else iparser++;
+				if (parse_bin(str)) cardserver->fallowmgcamd = str[0]=='0';
+			}
 			else if (!strcmp(str,"NEWCAMD")) {
 				parse_spaces();
 				if (*iparser!=':') {
@@ -1763,7 +1823,7 @@ int read_config(struct config_data *cfg)
 					debugf(" config(%d,%d): sids already defined!!!\n",nbline,iparser-currentline);
 					continue;
 				}
-				int count = 0;
+				int32_t count = 0;
 				unsigned short *sids;
 				sids = malloc ( sizeof(unsigned short) * MAX_SIDS );
 				memset( sids, 0, sizeof(unsigned short) * MAX_SIDS );
@@ -1781,7 +1841,7 @@ int read_config(struct config_data *cfg)
 				}
 				sids[count] = 0;
 			}
-	
+
 			else if (!strcmp(str,"DENYLIST")) {
 				parse_spaces();
 				if (*iparser!=':') {
@@ -1807,7 +1867,7 @@ int read_config(struct config_data *cfg)
 					memset( cardserver->key, 0, 16 );
 					debugf(" config(%d,%d): Error reading DES-KEY\n",nbline,iparser-currentline);
 					break;
-				} 
+				}
 				else {
 					cardserver->key[i] = hex2int(str);
 				}
@@ -1872,7 +1932,7 @@ int read_config(struct config_data *cfg)
 	while(gl) {
 		struct cardserver_data *cs = cfg->cardserver;
 		while(cs) {
-			int i;
+			int32_t i;
 			for(i=0; i<MAX_CSPORTS; i++ ) {
 				if (!gl->csport[i]) break;
 				if (gl->csport[i]==cs->port) {
@@ -1905,16 +1965,16 @@ int read_config(struct config_data *cfg)
 }
 
 
-int read_chinfo( struct program_data *prg )
+int32_t read_chinfo( struct program_data *prg )
 {
 	FILE *fhandle;
 	char str[128];
-	int nbline = 0;
+	int32_t nbline = 0;
 	char fname[512];
 
 	uint16 caid,sid;
 	uint32 prov;
-	int chncount = 0;
+	int32_t chncount = 0;
 
 	sprintf(fname, "/var/etc/newbox.channelinfo");
 	// Open Config file
@@ -1974,19 +2034,19 @@ int read_chinfo( struct program_data *prg )
 	return 0;
 }
 
-int read_badcw( struct config_data *cfg )
+int32_t read_badcw( struct config_data *cfg )
 {
 	FILE *fhandle;
 	char fname[512];
-	int chncount = 0;
+	int32_t chncount = 0;
 	
 	sprintf(fname, "/var/etc/badcw.cfg");
 	// Open Config file
 	fhandle = fopen(fname,"rt");
-  if (fhandle==0) {
-    debugf(" config: parsing file '%s'\n",fname);
-    return -1;
-  }
+	if (fhandle==0) {
+		debugf(" config: parsing file '%s'\n",fname);
+		return -1;
+	}
 	fclose(fhandle);
 	debugf(" config: reading %d badcw.cfg.\n", chncount);
 	return 0;
@@ -1994,11 +2054,11 @@ int read_badcw( struct config_data *cfg )
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int cardcmp( struct cs_card_data *card1, struct cs_card_data *card2)
+int32_t cardcmp( struct cs_card_data *card1, struct cs_card_data *card2)
 {
 	if (card1->caid!=card2->caid) return 1;
 	if (card1->nbprov!=card2->nbprov) return 1;
-	int i;
+	int32_t i;
 	for(i=0; i<card1->nbprov; i++) if (card1->prov[i]!=card2->prov[i]) return 1;
 	return 0;
 }
@@ -2019,7 +2079,9 @@ void reread_config( struct config_data *cfg )
 	newcfg.serverid = cfg->serverid;
 	newcfg.cardserverid = cfg->cardserverid;
 	newcfg.cachepeerid = cfg->cachepeerid;
+	newcfg.newcamdclientid = cfg->newcamdclientid;
 	newcfg.cccamclientid = cfg->cccamclientid;
+	newcfg.freecccamclientid = cfg->freecccamclientid;
 	newcfg.mgcamdclientid = cfg->mgcamdclientid;
 
 	//## Cache
@@ -2346,7 +2408,7 @@ void reread_config( struct config_data *cfg )
 	}
 	free_allhosts( cfg );
 
-	// DAB-DCW
+	// BAD-DCW
 	while(cfg->bad_dcw) {
 		struct dcw_data *dcw = cfg->bad_dcw;
 		cfg->bad_dcw = cfg->bad_dcw->next;
@@ -2359,7 +2421,7 @@ void reread_config( struct config_data *cfg )
 }
 
 // Open ports & set id's
-int check_config(struct config_data *cfg)
+int32_t check_config(struct config_data *cfg)
 {
 
 	// Open ports for new profiles
@@ -2466,7 +2528,7 @@ int check_config(struct config_data *cfg)
 			debugf(" Cache server started on port %d\n",cfg->cacheport);
 		}
 	}
-	// create cahcepeer socket
+	// create cachepeer socket
 	struct cs_cachepeer_data *peer = cfg->cachepeer;
 	while (peer) {
 		if (peer->outsock<=0) peer->outsock = CreateClientSockUdp();
@@ -2516,6 +2578,17 @@ int check_config(struct config_data *cfg)
 	}
 #endif
 
+#ifdef FREECCCAM_SRV
+	struct cc_client_data *fcccli = cfg->freecccam.client;
+	while (fcccli) {
+		if (!fcccli->id) {
+			fcccli->id = cfg->freecccamclientid;
+			cfg->freecccamclientid++;
+		}
+		fcccli = fcccli->next;
+	}
+#endif
+
 	// add MGCAMD Client id's
 #ifdef MGCAMD_SRV
 	struct mg_client_data *mgcli = cfg->mgcamd.client;
@@ -2528,8 +2601,8 @@ int check_config(struct config_data *cfg)
 	}
 #endif
 
-	// add cahcepeer id's
-//	struct cs_cachepeer_data *
+	// add cachepeer id's
+	//struct cs_cachepeer_data *
 	peer = cfg->cachepeer;
 	while(peer) {
 		if (!peer->id) {
@@ -2544,7 +2617,7 @@ int check_config(struct config_data *cfg)
 
 
 // Close ports
-int done_config(struct config_data *cfg)
+int32_t done_config(struct config_data *cfg)
 {
 	// Close Newcamd/Radegast Clients Connections & profiles ports
 	struct cardserver_data *cs = cfg->cardserver;

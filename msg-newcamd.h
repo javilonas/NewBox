@@ -80,5 +80,5 @@ struct cs_custom_data
 void cs_init();
 int cs_message_send(int sock,struct cs_custom_data *cd, unsigned char *buffer, int len, unsigned char *deskey);
 int cs_message_receive(int sock,struct cs_custom_data *cd, unsigned char *buffer, unsigned char *deskey, int timeout);
-int cs_msg_chkrecv(int sock);
+int32_t cs_msg_chkrecv(int32_t sock);
 

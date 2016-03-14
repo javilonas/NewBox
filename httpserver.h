@@ -20,11 +20,11 @@
 extern struct config_data cfg;
 extern struct program_data prg;
 
-extern int END_PROCESS;
+extern int32_t END_PROCESS;
 
-char *getchname(uint16 caid, uint32 prov, uint16 sid );
+char *getchname(uint16_t caid, uint32_t prov, uint16_t sid );
 
 void *http_thread(void *param);
 
-int start_thread_http();
+int32_t start_thread_http();
 

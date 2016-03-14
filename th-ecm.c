@@ -27,7 +27,7 @@ struct srvtab_data
 	int uphops;
 	int val; // sid value
 	unsigned int ecmtime;
-	uint32 ecmperhr;
+	uint32_t ecmperhr;
 };
 
 
@@ -53,6 +53,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 		if (
 			( cs->fallownewcamd&&(srv->type==TYPE_NEWCAMD) )
 			|| ( cs->fallowcccam&&(srv->type==TYPE_CCCAM) )
+			|| ( cs->fallowmgcamd&&(srv->type==TYPE_MGCAMD) )
 			|| ( cs->fallowradegast&&(srv->type==TYPE_RADEGAST) )
 		)
 		if (srv->handle>0)
@@ -184,14 +185,14 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 #endif
 			// Mgcamd
 #ifdef MGCAMD_SRV
-/*
+
 			struct mg_client_data *mgcli = cfg.mgcamd.client;
 			while (mgcli) {
 				if ( (mgcli->handle!=INVALID_SOCKET)&&(mgcli->ip==srvtab[j].srv->host->ip)&&(mgcli->ecm.busy)&&(mgcli->ecm.id==ecmid) ) break; // DELETE SERVER
 				mgcli = mgcli->next;
 			}
 			if (mgcli) continue;
-*/
+
 #endif
 			// ADD SERVER
 			if (i<j) memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
@@ -254,7 +255,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
 						}
-						else if  ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
+						else if ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -268,7 +269,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 						memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
 					}
 					else if (srvtab[j].val==-1) {
-						if  ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
+						if ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -282,7 +283,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 						memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
 					}
 					else {
-						if  ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
+						if ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -301,13 +302,13 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 	else
 
 		for(i=0; i<nbsrv-1; i++)
-		 for(j=i+1; j<nbsrv; j++)
+		for(j=i+1; j<nbsrv; j++)
 
 			if (srvtab[i].srv->busy == srvtab[j].srv->busy ) {
 
 				if (srvtab[i].val>0) {
 					if (srvtab[j].val>0) {
-						if  ( ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) ) {
+						if ( ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -321,7 +322,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 						memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
 					}
 					else if (srvtab[j].val==0) {
-						if  ( ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) ) {
+						if ( ( srvtab[i].ecmperhr > srvtab[j].ecmperhr ) ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -335,7 +336,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 						memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
 					}
 					else {
-						if  ( srvtab[i].val < srvtab[j].val ) {
+						if ( srvtab[i].val < srvtab[j].val ) {
 							memcpy( &srvtemp, &srvtab[i], sizeof(struct srvtab_data));
 							memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
 							memcpy( &srvtab[j], &srvtemp, sizeof(struct srvtab_data));
@@ -360,7 +361,7 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 // Check sending ecm to servers
 ///////////////////////////////////////////////////////////////////////////////
 
-uint32 check_sendecm()
+uint32_t check_sendecm()
 {
 
 // Send priority
@@ -379,11 +380,11 @@ uint32 check_sendecm()
 	while ( (ecmid=prevecmid(ecmid)) != lastecmid ) {
 
 		ECM_DATA *ecm =  getecmbyid(ecmid);
-		uint32 ticks = GetTickCount();
+		uint32_t ticks = GetTickCount();
 
 		ecm->checktime = 0;
 
-		// CACHE(fallowcache = 1)
+		//CACHE(fallowcache = 1)
 		if (ecm->dcwstatus==STAT_DCW_WAITCACHE) {
 			struct cardserver_data *cs = getcsbyid( ecm->csid );
 			if (!cs) {
@@ -522,7 +523,7 @@ uint32 check_sendecm()
 #endif
 							// Send DCW to Cache if not sent
 							if ( cs->usecache && (ecm->cachestatus==ECM_CACHE_REQ) ) {
-								//pipe_send_cache_reply(ecm,cs); //Send Failed Cache Reply
+								pipe_send_cache_reply(ecm,cs); //Send Failed Cache Reply
 								ecm->cachestatus=ECM_CACHE_REP;
 							}
 						}
@@ -651,9 +652,9 @@ uint32 check_sendecm()
 
 void recv_ecm_pipe()
 {
-	uint16 sid;
-	uint16 caid;
-	uint32 hash;
+	uint16_t sid;
+	uint16_t caid;
+	uint32_t hash;
 	uchar buf[1024];
 	int ecmid;
 	struct pollfd pfd[2];
@@ -952,14 +953,14 @@ void *recv_msg_thread(void *param)
 
 	prg.tid_msg = pthread_self();
 
-	uint32 katicks = GetTickCount()+ 20000; // KeepAlive for servers
+	uint32_t katicks = GetTickCount()+ 20000; // KeepAlive for servers
 
 	while(1) {
 
 		pthread_t lastthreadid = pthread_self();
 
 		// getmintime
-		uint32 mintime = cs_dcw_check_time;
+		uint32_t mintime = cs_dcw_check_time;
 #ifdef MGCAMD_SRV
 		if (mintime>mg_dcw_check_time) mintime=mg_dcw_check_time;
 #endif

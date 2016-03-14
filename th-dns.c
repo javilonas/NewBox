@@ -54,8 +54,8 @@ void *dns_thread(void *param)
 		struct host_data *host = cfg.host;
 		while (host) {
 			if (host->checkiptime<=getseconds()) {
-				//pthread_t new_tid;
-				//create_prio_thread(&new_tid, (threadfn)dns_child_thread,host, 50);
+				pthread_t new_tid;
+				create_prio_thread(&new_tid, (threadfn)dns_child_thread,host, 50);
 				dns_child_thread( host );
 			}
 			host = host->next;

@@ -18,15 +18,15 @@
 #endif
 
 
-struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32 id );
+struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32_t id );
 void cc_disconnect_srv(struct cs_server_data *srv);
-int cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm);
+int32_t cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm);
 
 ///////////////////////////////////////////////////////////////////////////////
 // CLIENT CONNECT
 ///////////////////////////////////////////////////////////////////////////////
 
-struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32 id )
+struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32_t id )
 {
 	struct cs_card_data *card = srv->card;
 	while (card) {
@@ -38,15 +38,26 @@ struct cs_card_data *cc_getcardbyid( struct cs_server_data *srv, uint32 id )
 
 
 // Send Client info to server.
-int cc_sendinfo_srv(struct cs_server_data *srv, int isnewbox)
+int32_t cc_sendinfo_srv(struct cs_server_data *srv, int32_t isnewbox)
 {
-	uint8 buf[CC_MAXMSGSIZE];
+#ifdef FREECCCAM
+	uint8_t buf[CC_MAXMSGSIZE];
+	memset(buf, 0, CC_MAXMSGSIZE);
+	memcpy(buf, srv->user, 20);
+	memcpy(buf + 20, cfg.freecccam.nodeid, 8 );
+	buf[28] = 0; //srv->wantemus;
+	memcpy(buf + 29, cfg.freecccam.version, 32); // cccam version (ascii)
+	memcpy(buf + 61, cfg.freecccam.build, 32); // build number (ascii)
+	debugf(" CCcam: send client info User: '%s', Version: '%s', Build: '%s'\n", srv->user, cfg.freecccam.version, cfg.freecccam.build);
+	return cc_msg_send( srv->handle, &srv->sendblock, CC_MSG_CLI_INFO, 20 + 8 + 1 + 64, buf);
+#endif
+	uint8_t buf[CC_MAXMSGSIZE];
 	memset(buf, 0, CC_MAXMSGSIZE);
 	memcpy(buf, srv->user, 20);
 	memcpy(buf + 20, cfg.cccam.nodeid, 8 );
 	buf[28] = 0; //srv->wantemus;
-	memcpy(buf + 29, cfg.cccam.version, 32);	// cccam version (ascii)
-	memcpy(buf + 61, cfg.cccam.build, 32);	// build number (ascii)
+	memcpy(buf + 29, cfg.cccam.version, 32); // cccam version (ascii)
+	memcpy(buf + 61, cfg.cccam.build, 32); // build number (ascii)
 	debugf(" CCcam: send client info User: '%s', Version: '%s', Build: '%s'\n", srv->user, cfg.cccam.version, cfg.cccam.build);
 	return cc_msg_send( srv->handle, &srv->sendblock, CC_MSG_CLI_INFO, 20 + 8 + 1 + 64, buf);
 }
@@ -56,18 +67,23 @@ int cc_sendinfo_srv(struct cs_server_data *srv, int isnewbox)
 // Connect to a server.
 // Return
 // 0: no error
-int cc_connect_srv(struct cs_server_data *srv, int fd)
+int32_t cc_connect_srv(struct cs_server_data *srv, int32_t fd)
 {
-	int n;
-	uint8 data[20];
-	uint8 hash[SHA_DIGEST_LENGTH];
-	uint8 buf[CC_MAXMSGSIZE];
-	char pwd[64];
-	//
+	int32_t n,len;
+	uint8_t data[20];
+	uint8_t hash[SHA_DIGEST_LENGTH];
+	uint8_t buf[CC_MAXMSGSIZE];
+	char usr[128];
+	char pwd[255];
+
+	memset(usr, 0, sizeof(usr));
+	memset(pwd, 0, sizeof(pwd));
+
 	if (fd < 0) return -1;
 	// INIT
 	srv->progname = NULL;
 	memset( srv->version, 0, sizeof(srv->version) );
+	memset( srv->build, 0, 32);
 	// get init seed(random) from server
 	if((n = recv_nonb(fd, data, 16,3000)) != 16) {
 		static char msg[]= "Server does not return init sequence";
@@ -83,13 +99,19 @@ int cc_connect_srv(struct cs_server_data *srv, int fd)
 	}
 
 	// Check newbox
-	int isnewbox = 0;
+	int32_t isnewbox = 0;
 	uchar a = (data[0]^'N') + data[1] + data[2];
 	uchar b = data[4] + (data[5]^'B') + data[6];
 	uchar c = data[8] + data[9] + (data[10]^'x');
-	if ( (a==data[3])&&(b==data[7])&&(c==data[11]) ) {
+	if ( (a==data[3])&&(b==data[7])&&(c==data[11]) ) isnewbox = 1;
+	/*else if ( (a==data[3])&&(b==data[7])&&(c==data[11]) ) {
 		isnewbox = 1;
-	}
+		}*/
+
+	// 3. Send login info
+	struct cs_custom_data clicd; // Custom data
+	memset( &clicd, 0, sizeof(clicd));
+	clicd.sid = cfg.newcamdclientid; // Mgcamd
 
 	cc_crypt_xor(data);  // XOR init bytes with 'CCcam'
 
@@ -118,7 +140,7 @@ int cc_connect_srv(struct cs_server_data *srv, int fd)
 	//debugf("CCcam: 'CCcam' xor\n");
 	memcpy(buf, "CCcam", 5);
 	strncpy(pwd, srv->pass, 63);
-	cc_encrypt(&srv->sendblock, (uint8 *)pwd, strlen(pwd));
+	cc_encrypt(&srv->sendblock, (uint8_t *)pwd, strlen(pwd));
 	cc_msg_send( fd, &srv->sendblock, CC_MSG_NO_HEADER, 6, buf); // send 'CCcam' xor w/ pwd
 	if ((n = recv_nonb(fd, data, 20,3000)) != 20) {
 		static char msg[]= "Password ACK not received";
@@ -188,11 +210,11 @@ void cc_disconnect_srv(struct cs_server_data *srv)
 ///////////////////////////////////////////////////////////////////////////////
 
 void cc_srv_recvmsg(struct cs_server_data *srv)
-{     
+{
 	unsigned char buf[CC_MAXMSGSIZE];
 	struct cs_card_data *card;
 	struct cardserver_data *cs;
-	int i, len;
+	int32_t i, len;
 	ECM_DATA *ecm;
 
 	if ( (srv->type==TYPE_CCCAM)&&(srv->handle>0) ) {
@@ -231,10 +253,10 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 						break;
 					}
 
-					uint8 dcw[16];
+					uint8_t dcw[16];
 					cc_crypt_cw( cfg.cccam.nodeid, srv->busycardid, &buf[4]);
 					memcpy(dcw, &buf[4], 16);
-					cc_decrypt(&srv->recvblock, buf+4, len-4); // additional crypto step				
+					cc_decrypt(&srv->recvblock, buf+4, len-4); // additional crypto step
 
 					srv->busy = 0;
 					srv->lastdcwtime = GetTickCount();
@@ -257,7 +279,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 					}
 
 					cs = getcsbyid(ecm->csid);
-					int cardcheck = istherecard( srv, srv->busycard );
+					int32_t cardcheck = istherecard( srv, srv->busycard );
 					// Check for DCW
 					if (!acceptDCW(dcw)) {
 						srv->ecmerrdcw ++;
@@ -385,7 +407,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 
 				case CC_MSG_CARD_DEL: // Delete Card
 					card = srv->card;
-					uint32 k = buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7];
+					uint32_t k = buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7];
 					struct cs_card_data *prevcard = NULL;
 					while (card) {
 						if (card->shareid==k) {
@@ -405,12 +427,12 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 						prevcard = card;
 						card = card->next;
 					}
-			  		break;
+					break;
 
 				case CC_MSG_CARD_ADD:
 					// remove own cards -> same nodeid "cfg.cccam.nodeid"
 					if ( (buf[14]<srv->uphops) && (buf[24]<=16) && memcmp(buf+26+buf[24]*7,cfg.cccam.nodeid,8) ) { // check Only the first 4 bytes
-						// nodeid index = 26 + 7 * buf[24]
+						//nodeid index = 26 + 7 * buf[24]
 						struct cs_card_data *card = malloc( sizeof(struct cs_card_data) );
 						memset(card, 0, sizeof(struct cs_card_data) );
 						card->shareid = buf[4]<<24 | buf[5]<<16 | buf[6]<<8 | buf[7];
@@ -458,7 +480,7 @@ void cc_srv_recvmsg(struct cs_server_data *srv)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
+int32_t cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 {
 	unsigned char buf[CC_MAXMSGSIZE];
 
@@ -484,7 +506,7 @@ int cc_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 		srv->lastecmtime = GetTickCount();
 		srv->busy = 1;
 		//srv->busycardid = card->id;
-		
+
 		return cc_msg_send( srv->handle, &srv->sendblock, CC_MSG_ECM_REQUEST, 13+ecm->ecmlen, buf );
 	//}
 	//return 0;

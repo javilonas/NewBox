@@ -1,6 +1,6 @@
 #if 0
 # 
-# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Copyright (c) 2014 - 2016 Javier Sayago <admin@lonasdigital.com>
 # Contact: javilonas@esp-desarrolladores.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,16 +22,23 @@
 
 #define FD_SETSIZE2  4096
 
-#define DELAY_MAIN	 10000
-#define DELAY_RECV	 0
+#define DELAY_MAIN   10000
+#define DELAY_RECV   0
 #define DELAY_ACCEPT 100000
-
 
 #ifdef CCCAM_SRV
 #define CCCAM
 #else
 #ifdef CCCAM_CLI
 #define CCCAM
+#endif
+#endif
+
+#ifdef MGCAMD_SRV
+#define MGCAMD
+#else
+#ifdef MGCAMD_CLI
+#define MGCAMD
 #endif
 #endif
 
@@ -43,9 +50,9 @@
 #endif
 #endif
 
-#define DATE_BUILD    "04-08-2015"
-#define VERSION    "06"
-#define REVISION   06
+#define DATE_BUILD    "13-03-2016"
+#define VERSION    "07.r27"
+#define REVISION   07
 
 #define FALSE 0
 #define TRUE 1
@@ -63,8 +70,8 @@ typedef unsigned long long uint64;
 // win32 definitions
 #ifndef WIN32
 
-typedef int SOCKET;
-typedef int HANDLE;
+typedef int32_t SOCKET;
+typedef int32_t HANDLE;
 #define INVALID_HANDLE_VALUE -1
 #define INVALID_SOCKET -1
 #define SOCKET_ERROR   -1

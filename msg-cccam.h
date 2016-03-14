@@ -17,11 +17,14 @@
 #
 #endif
 
-#include "rc6.h"
-#include "idea.h"
+#include "cscrypt/rc6.h"
+#include "cscrypt/idea.h"
+
+#define CAID_KEY 0x20
 
 #define CC_MAXMSGSIZE 0x400 //by Project::Keynation: Buffer size is limited on "O" CCCam to 1024 bytes
-#define CC_MAX_PROV   32
+#define CC_MAX_PROV   16
+#define CC_MAX_ECMS   50  // before reconnect
 #define SWAPC(X, Y) do { char p; p = *X; *X = *Y; *Y = p; } while(0)
 
 // CCcam Cryptage Functions
@@ -56,39 +59,39 @@ struct cc_provider
 };
 
 void cc_crypt_swap(unsigned char *p1, unsigned char *p2);
-void cc_crypt_init( struct cc_crypt_block *block, uint8 *key, int len);
-void cc_crypt_xor(uint8 *buf);
-void cc_decrypt(struct cc_crypt_block *block, uint8 *data, int len);
-void cc_encrypt(struct cc_crypt_block *block, uint8 *data, int len);
-void cc_crypt_cw(uint8 *nodeid, uint32 card_id, uint8 *cws);
+void cc_crypt_init( struct cc_crypt_block *block, uint8_t *key, int32_t len);
+void cc_crypt_xor(uint8_t *buf);
+void cc_decrypt(struct cc_crypt_block *block, uint8_t *data, int32_t len);
+void cc_encrypt(struct cc_crypt_block *block, uint8_t *data, int32_t len);
+void cc_crypt_cw(uint8_t *nodeid, uint32 card_id, uint8_t *cws);
 
 
 // CCcam Connection Functions
 
 typedef enum
 {
-  CC_MSG_CLI_INFO,		// client -> server
-  CC_MSG_ECM_REQUEST,		// client -> server
-  CC_MSG_EMM_REQUEST,		// client -> server
-  CC_MSG_CARD_DEL = 4,		// server -> client
-  CC_MSG_BAD_ECM,
-  CC_MSG_KEEPALIVE,		// client -> server
-  CC_MSG_CARD_ADD,		// server -> client
-  CC_MSG_SRV_INFO,		// server -> client
-  CC_MSG_CMD_0A = 0x0a,
-  CC_MSG_CMD_0B = 0x0b,
-  CC_MSG_CMD_0C = 0x0c, // CCCam 2.2.x fake client checks
-  CC_MSG_CMD_0D = 0x0d, // "
-  CC_MSG_CMD_0E = 0x0e, // "
-  CC_MSG_NEW_CARD_SIDINFO = 0x0f,
-  CC_MSG_SLEEPSEND = 0x80, //Sleepsend support
-  CC_MSG_ECM_NOK1 = 0xfe,	// server -> client ecm queue full, card not found
-  CC_MSG_ECM_NOK2 = 0xff,	// server -> client
-  CC_MSG_NO_HEADER = 0xffff
+	CC_MSG_CLI_INFO, // client -> server
+	CC_MSG_ECM_REQUEST, // client -> server
+	CC_MSG_EMM_REQUEST, // client -> server
+	CC_MSG_CARD_DEL = 4, // server -> client
+	CC_MSG_BAD_ECM,
+	CC_MSG_KEEPALIVE, // client -> server
+	CC_MSG_CARD_ADD, // server -> client
+	CC_MSG_SRV_INFO, // server -> client
+	CC_MSG_CMD_0A = 0x0a,
+	CC_MSG_CMD_0B = 0x0b,
+	CC_MSG_CMD_0C = 0x0c, // CCCam 2.2.x fake client checks
+	CC_MSG_CMD_0D = 0x0d, // "
+	CC_MSG_CMD_0E = 0x0e, // "
+	CC_MSG_NEW_CARD_SIDINFO = 0x0f,
+	CC_MSG_SLEEPSEND = 0x80, //Sleepsend support
+	CC_MSG_ECM_NOK1 = 0xfe, // server -> client ecm queue full, card not found
+	CC_MSG_ECM_NOK2 = 0xff, // server -> client
+	CC_MSG_NO_HEADER = 0xffff
 } cc_msg_cmd;
 
-int cc_msg_recv(int handle,struct cc_crypt_block *recvblock, uint8 *buf, int timeout);
-int cc_msg_recv_nohead(int handle, struct cc_crypt_block *recvblock, uint8 *buf, int len);
-int cc_msg_send(int handle,struct cc_crypt_block *sendblock, cc_msg_cmd cmd, int len, uint8 *buf);
-int cc_msg_chkrecv(int handle,struct cc_crypt_block *recvblock);
+int32_t cc_msg_recv(int32_t handle,struct cc_crypt_block *recvblock, uint8_t *buf, int32_t timeout);
+int32_t cc_msg_recv_nohead(int32_t handle, struct cc_crypt_block *recvblock, uint8_t *buf, int32_t len);
+int32_t cc_msg_send(int32_t handle,struct cc_crypt_block *sendblock, cc_msg_cmd cmd, int32_t len, uint8_t *buf);
+int32_t cc_msg_chkrecv(int32_t handle,struct cc_crypt_block *recvblock);
 

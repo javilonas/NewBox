@@ -1,6 +1,6 @@
 #if 0
 # 
-# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Copyright (c) 2014 - 2016 Javier Sayago <admin@lonasdigital.com>
 # Contact: javilonas@esp-desarrolladores.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,7 +17,7 @@
 #
 #endif
 
-#define MAX_ECM_DATA 5096 // 4096 default
+#define MAX_ECM_DATA 6096 // 4096 default
 
 #define ECM_SRV_REQUEST     0
 #define ECM_SRV_REPLY_GOOD  1
@@ -32,10 +32,10 @@
 
 typedef enum
 {
-	STAT_DCW_FAILED,	// decode failed
-	STAT_DCW_WAIT,		// Wait servers answer
-	STAT_DCW_WAITCACHE,	// Wait cached servers answer
-	STAT_DCW_SUCCESS	// dcw returned 
+	STAT_DCW_FAILED, // decode failed
+	STAT_DCW_WAIT, // Wait servers answer
+	STAT_DCW_WAITCACHE, // Wait cached servers answer
+	STAT_DCW_SUCCESS // dcw returned 
 } dcwstatus_type;
 
 
@@ -53,23 +53,23 @@ typedef struct {
 	// Ecm Data
 	unsigned int csid; // cardserver unique id
 
-	uint32 recvtime;     // First request time in ms received from client
-	uint32 lastrecvtime; // Last request time received from client
-	uint32 lastsendtime; // Last request Time sent to server
-	uint16 sid;					// Service id
-	uint16 caid;				// CA id
-	uint32 provid;				// Provider
-	int ecmlen;
-	uint8 ecm[512];
-	uint32 crc;
-	uint32 hash;
+	uint32_t recvtime;     // First request time in ms received from client
+	uint32_t lastrecvtime; // Last request time received from client
+	uint32_t lastsendtime; // Last request Time sent to server
+	uint16_t sid; // Service id
+	uint16_t caid; // CA id
+	uint32_t provid; // Provider
+	int32_t ecmlen;
+	uint8_t ecm[512];
+	uint32_t crc;
+	uint32_t hash;
 	// DCW/Status
 	dcwstatus_type dcwstatus;
-	uint8 cw[32];
+	uint8_t cw[32];
 	// DCW SOURCE
-	int dcwsrctype;
-	int dcwsrcid;
-	int peerid; // Cache PeerID sending dcw(0=nothing)
+	int32_t dcwsrctype;
+	int32_t dcwsrcid;
+	int32_t peerid; // Cache PeerID sending dcw(0=nothing)
 
 	unsigned int checktime; // time when recheck the ecm.
 
@@ -80,12 +80,12 @@ typedef struct {
 #ifdef CHECK_NEXTDCW
 	// Last Successive ECM/DCW
 	struct {	
-		int status; //0: nothing, 1: found last decode, -1:error dont search
-		uint8 dcw[32];
-		int error;
-        int ecmid;
-        int counter; // successif dcw counter * -1:error, 0: not found, 1: found and checked 1 time, 2: found and checked 2 times ...
-        uint dcwchangetime;
+		int32_t status; //0: nothing, 1: found last decode, -1:error dont search
+		uint8_t dcw[32];
+		int32_t error;
+		int32_t ecmid;
+		int32_t counter; // successif dcw counter * -1:error, 0: not found, 1: found and checked 1 time, 2: found and checked 2 times ...
+		uint dcwchangetime;
 	} lastdecode;
 #endif
 
@@ -93,45 +93,45 @@ typedef struct {
 	struct {
 		unsigned int sendtime; // ECM request sent time
 		unsigned int statustime; // Last Status Time
-		uint32 srvid; // Server ID 0=nothing
-		int flag; // 0=request , 1=reply, 2: excluded(like cccam)
-		uint8 dcw[32];
+		uint32_t srvid; // Server ID 0=nothing
+		int32_t flag; // 0=request , 1=reply, 2: excluded(like cccam)
+		uint8_t dcw[32];
 	} server[20]; 
 
-	int waitcache; // 1: Wait for Cache; 0: dont wait
+	int32_t waitcache; // 1: Wait for Cache; 0: dont wait
 	
-	int srvmsgid;
+	int32_t srvmsgid;
 
 } ECM_DATA;
 
 extern ECM_DATA ecmdata[MAX_ECM_DATA];
 
 void init_ecmdata();
-uint32 ecm_crc( uchar *ecm, int ecmlen);
+uint32_t ecm_crc( uchar *ecm, int32_t ecmlen);
 unsigned int hashCode( unsigned char *buf, int count);
 
-ECM_DATA *getecmbyid(int id);
-int prevecmid( int ecmid );
-int nextecmid( int ecmid );
+ECM_DATA *getecmbyid(int32_t id);
+int32_t prevecmid( int32_t ecmid );
+int32_t nextecmid( int32_t ecmid );
 
 int store_ecmdata(int csid,uchar *ecm,int ecmlen, unsigned short sid, unsigned short caid, unsigned int provid);
 int search_ecmdata( uchar *ecm, int ecmlen, unsigned short sid);
 int search_ecmdata_dcw( uchar *ecm, int ecmlen, unsigned short sid);
-int search_ecmdata_bymsgid( int msgid );
-int search_ecmdata_byhash( uint32 hash );
+int32_t search_ecmdata_bymsgid( int32_t msgid );
+int32_t search_ecmdata_byhash( uint32_t hash );
 
 int ecm_addsrv(ECM_DATA *ecm, unsigned srvid);
-int ecm_nbsentsrv(ECM_DATA *ecm);
-int ecm_nbwaitsrv(ECM_DATA *ecm);
+int32_t ecm_nbsentsrv(ECM_DATA *ecm);
+int32_t ecm_nbwaitsrv(ECM_DATA *ecm);
 int ecm_setsrvflag(int ecmid, unsigned int srvid, int flag);
 int ecm_setsrvflagdcw(int ecmid, unsigned int srvid, int flag, uchar dcw[32]);
 int ecm_getsrvflag(int ecmid, unsigned int srvid);
-int ecm_getreplysrvid(int ecmid);
+int32_t ecm_getreplysrvid(int32_t ecmid);
 
-int search_ecmdata_bycw( unsigned char *cw, uint32 hash, unsigned short sid, unsigned short caid, unsigned int provid);
+int search_ecmdata_bycw( unsigned char *cw, uint32_t hash, unsigned short sid, unsigned short caid, unsigned int provid);
 
 #ifdef CHECK_NEXTDCW
-int checkfreeze_setdcw( int ecmid, uchar dcw[32] );
+int32_t checkfreeze_setdcw( int32_t ecmid, uchar dcw[32] );
 #endif
 
-extern int srvmsgid;
+extern int32_t srvmsgid;

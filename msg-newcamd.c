@@ -34,7 +34,7 @@
 #include <pthread.h>
 
 #include "common.h"
-#include "des.h"
+#include "cscrypt/des.h"
 #include "debug.h"
 #include "sockets.h"
 #include "msg-newcamd.h"
@@ -94,9 +94,9 @@ int cs_message_send(int sock,struct cs_custom_data *cd, unsigned char *buffer, i
 // >0: ok
 int cs_message_receive(int sock,struct cs_custom_data *cd, unsigned char *buffer, unsigned char *deskey, int timeout)
 {
-  int len;
+  int32_t len;
   unsigned char netbuf[CWS_NETMSGSIZE];
-  int returnLen;
+  int32_t returnLen;
 
   if (sock==INVALID_SOCKET) {
 	//printf("newcamd: Invalid Socket\n");
@@ -117,7 +117,7 @@ int cs_message_receive(int sock,struct cs_custom_data *cd, unsigned char *buffer
 	//printf("newcamd: big message size (%d)\n", (netbuf[0] << 8) | netbuf[1] );
 	return -1;
   }
-  int netlen = (netbuf[0] << 8) | netbuf[1];
+  int32_t netlen = (netbuf[0] << 8) | netbuf[1];
   len = recv_nonb(sock, netbuf+2, netlen,timeout);
   if (len<=0) {
 	//printf("newcamd: recive error\n");
@@ -163,9 +163,9 @@ int cs_message_receive(int sock,struct cs_custom_data *cd, unsigned char *buffer
 // -1: not yet
 // 0: disconnect
 // >0: ok
-int cs_msg_chkrecv(int sock)
+int32_t cs_msg_chkrecv(int32_t sock)
 {
-	int len;
+	int32_t len;
 	unsigned char netbuf[CWS_NETMSGSIZE];
 
 	len = recv(sock, netbuf, 2, MSG_PEEK|MSG_NOSIGNAL|MSG_DONTWAIT);
@@ -173,7 +173,7 @@ int cs_msg_chkrecv(int sock)
 	if (len==0) return 0;
 	if (len!=2) return -1;
 
-	int datasize = (netbuf[0] << 8) | netbuf[1];
+	int32_t datasize = (netbuf[0] << 8) | netbuf[1];
 	if ( datasize > CWS_NETMSGSIZE-2) return 0;
 
 	len = recv(sock, netbuf, 2+datasize, MSG_PEEK|MSG_NOSIGNAL|MSG_DONTWAIT);

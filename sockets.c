@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fcntl.h>
 #include <sys/time.h>
 #include <time.h>
 #include <pthread.h>
@@ -32,16 +33,15 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <poll.h>
-
-#include <fcntl.h>
 #include <errno.h>
 
 #include "common.h"
 #include "tools.h"
 #include "sockets.h"
 
+
 // CONVERTION
-uint32 hostname2ip( const char *hostname )
+uint32_t hostname2ip( char *hostname )
 {
 	struct hostent *phostent;
 	unsigned int hostaddr;
@@ -61,12 +61,12 @@ uint32 hostname2ip( const char *hostname )
 
 char *iptoa(char *dest, unsigned int ip )
 {
-  sprintf(dest,"%d.%d.%d.%d", 0xFF&(ip), 0xFF&(ip>>8), 0xFF&(ip>>16), 0xFF&(ip>>24));
-  return dest;
+	sprintf(dest,"%d.%d.%d.%d", 0xFF&(ip), 0xFF&(ip>>8), 0xFF&(ip>>16), 0xFF&(ip>>24));
+	return dest;
 }
 
 char ip_string[3][0x40];
-int ip_string_counter = 0;
+int32_t ip_string_counter = 0;
 char *ip2string( unsigned int ip )
 {
 	ip_string_counter++; if (ip_string_counter>2) ip_string_counter = 0;
@@ -77,26 +77,26 @@ char *ip2string( unsigned int ip )
 // SOCKETS FUNCTIONS
 ////////////////////////////////////////////////////////////////////////////////
 
-int fdstatus_read(int s)
+int32_t fdstatus_read(SOCKET s)
 {
-  fd_set readfds;
-  int retval;
-  struct timeval timeout;
-  FD_ZERO(&readfds);
-  FD_SET(s, &readfds);
-  timeout.tv_usec = 0;
-  timeout.tv_sec = 0;
-  //do {
-  retval = select(s+1, &readfds, NULL, NULL,&timeout); 
-  //} while(retval<0 && errno==EINTR);
-  return retval;
+	fd_set readfds;
+	int32_t retval;
+	struct timeval timeout;
+	FD_ZERO(&readfds);
+	FD_SET(s, &readfds);
+	timeout.tv_usec = 0;
+	timeout.tv_sec = 0;
+	//do {
+	retval = select(s+1, &readfds, NULL, NULL,&timeout); 
+	//} while(retval<0 && errno==EINTR);
+	return retval;
 }
 
-int fdstatus_readt(int s, int tim)
+int32_t fdstatus_readt(SOCKET s, int32_t tim)
 {
-  fd_set readfds;
-  int retval;
-  struct timeval timeout;
+	fd_set readfds;
+	int32_t retval;
+	struct timeval timeout;
 
 	FD_ZERO(&readfds);
 	FD_SET(s, &readfds);
@@ -104,95 +104,92 @@ int fdstatus_readt(int s, int tim)
 	timeout.tv_sec = tim/1000;
  // do {
 	retval = select(s+1, &readfds, NULL, NULL,&timeout); 
-  //} while(retval<0 && errno==EINTR);
-  return retval;
+	//} while(retval<0 && errno==EINTR);
+	return retval;
 }
 
-int fdstatus_writet(int s, int tim)
+int32_t fdstatus_writet(SOCKET s, int32_t tim)
 {
-  fd_set writefds;
-  int retval;
-  struct timeval timeout;
+	fd_set writefds;
+	int32_t retval;
+	struct timeval timeout;
 
 	FD_ZERO(&writefds);
 	FD_SET(s, &writefds);
 	timeout.tv_usec = (tim%1000)*1000;
 	timeout.tv_sec = tim/1000;
-  do {
+	do {
 	retval = select(s+1, NULL, &writefds, NULL,&timeout); 
-  } while( (retval<0) && ( (errno==EINTR)||(errno==EAGAIN) ) );
+	} while( (retval<0) && ( (errno==EINTR)||(errno==EAGAIN) ) );
 
-  return retval;
+	return retval;
 }
 
-int fdstatus_write(int s)
+int32_t fdstatus_write(SOCKET s)
 {
-  fd_set writefds;
-  int retval;
-  struct timeval timeout;
-  FD_ZERO(&writefds);
-  FD_SET(s, &writefds);
-  timeout.tv_sec = 0;
-  timeout.tv_usec = 100;
-  do {
+	fd_set writefds;
+	int32_t retval;
+	struct timeval timeout;
+	FD_ZERO(&writefds);
+	FD_SET(s, &writefds);
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100;
+	do {
 	retval = select(s+1, NULL, &writefds, NULL,&timeout); 
-  } while ( (retval<0) && ( (errno==EINTR)||(errno==EAGAIN) ) );
-  return retval;
+	} while ( (retval<0) && ( (errno==EINTR)||(errno==EAGAIN) ) );
+	return retval;
 }
 
 
-int fdstatus_accept(int s)
+int32_t fdstatus_accept(SOCKET s)
 {
-  fd_set fd;
-  int retval;
-  struct timeval timeout;
+	fd_set fd;
+	int32_t retval;
+	struct timeval timeout;
 
-  FD_ZERO(&fd);
-  FD_SET(s, &fd);
-  timeout.tv_usec = 1000;
-  timeout.tv_sec = 0;
-  do {
-	retval = select(s+1, &fd, NULL, NULL,&timeout); 
-  } while(retval<0 && errno==EINTR);
-  return retval;
+	FD_ZERO(&fd);
+	FD_SET(s, &fd);
+	timeout.tv_usec = 0;
+	timeout.tv_sec = 10;
+	do {
+	retval = select(FD_SETSIZE, &fd, NULL, NULL,&timeout); 
+	} while(retval<0 && errno==EINTR);
+	return retval;
 }
 
 
-int SetSocketTimeout(int connectSocket, int milliseconds)
+int32_t SetSocketTimeout(SOCKET connectSocket, int32_t milliseconds)
 {
-    struct timeval tv;
+	struct timeval tv;
 
 	tv.tv_sec = milliseconds / 1000 ;
-	tv.tv_usec = ( milliseconds % 1000) * 1000  ;
+	tv.tv_usec = ( milliseconds % 1000) * 1000 ;
 
-    return setsockopt (connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
+	return setsockopt (connectSocket, SOL_SOCKET, SO_RCVTIMEO, (char*)&tv, sizeof tv);
 }
 
 /* Disable the Nagle (TCP No Delay) algorithm */
-int SetSocketNoDelay(int sock)
+int32_t SetSocketNoDelay(int32_t sock)
 {
-	int val = 1;
+	int32_t val = 1;
 	if( setsockopt( sock, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) < 0) return -1; 
 	return 0;
 }
 
-int SetSocketKeepalive(int sock)
+int32_t SetSocketKeepalive(SOCKET sock)
 {
-	int val = 1;
+	int32_t val = 1;
 	if(setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, &val, sizeof(val)) < 0) return -1; 
-/*
-	val = 60; 
+	val = 3;
 	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPIDLE, (void*)&val, sizeof(val)) < 0) return -1;
-	val = 30; 
 	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPINTVL, (void*)&val, sizeof(val)) < 0) return -1;
-	val = 4;
+	val = 1;
 	if(setsockopt(sock, IPPROTO_TCP, TCP_KEEPCNT, (void*)&val, sizeof(val)) < 0) return -1;
-*/
 	return 0;
 }
 
 /*
-int SetSocketPriority(int sock)
+int32_t SetSocketPriority(int32_t sock)
 {
 	setsockopt(sock, SOL_SOCKET, SO_PRIORITY, (void *)&cfg->netprio, sizeof(ulong));
 }
@@ -202,46 +199,46 @@ int SetSocketPriority(int sock)
 // UDP CONNECTION
 ///////////////////////////////////////////////////////////////////////////////
 
-int CreateServerSockUdp(int port)
+int32_t CreateServerSockUdp(int32_t port)
 {
-  int reuse=1;
-  int sock;
-  struct sockaddr_in saddr;
+	int32_t reuse=1;
+	SOCKET sock;
+	struct sockaddr_in saddr;
 
-  sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sock==INVALID_SOCKET) {
-    printf("Error in INP int creation\n");
-    return(INVALID_SOCKET);
-  }
-  saddr.sin_family = PF_INET;
-  saddr.sin_addr.s_addr = htonl( INADDR_ANY );
-  saddr.sin_port = htons(port);
+	sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (sock==INVALID_SOCKET) {
+		printf("Error in INP int creation\n");
+		return(INVALID_SOCKET);
+	}
+	saddr.sin_family = PF_INET;
+	saddr.sin_addr.s_addr = htonl( INADDR_ANY );
+	saddr.sin_port = htons(port);
 
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int))< 0)
-  {
-    close(sock);
-    printf("setsockopt() failed\n");
-    return INVALID_SOCKET;
-  }
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int32_t))< 0)
+	{
+		close(sock);
+		printf("setsockopt() failed\n");
+		return INVALID_SOCKET;
+	}
 
-  if ( bind( sock, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in)) == -1 ) {
-    printf("Error in bind INP int\n");
-    close(sock);
-    return(INVALID_SOCKET);
-  }
+	if ( bind( sock, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in)) == -1 ) {
+	printf("Error in bind INP int\n");
+	close(sock);
+	return(INVALID_SOCKET);
+	}
 
-  return( sock );
+	return( sock );
 }
 
-int CreateClientSockUdp()
+SOCKET CreateClientSockUdp()
 {
-  int sock;
-  sock = socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
-  if (sock==INVALID_SOCKET) {
-    printf("Error: socket()\n");
-    return INVALID_SOCKET;
-  }
-  return sock;
+	int32_t sock;
+	sock = socket(PF_INET,SOCK_DGRAM,IPPROTO_UDP);
+	if (sock==INVALID_SOCKET) {
+		printf("Error: socket()\n");
+		return INVALID_SOCKET;
+	}
+	return sock;
 }
 
 
@@ -249,73 +246,73 @@ int CreateClientSockUdp()
 // TCP CONNECTION
 ///////////////////////////////////////////////////////////////////////////////
 
-int CreateServerSockTcp(int port)
+SOCKET CreateServerSockTcp(int32_t port)
 {
-  int sock;
-  struct sockaddr_in saddr;
+	SOCKET sock;
+	struct sockaddr_in saddr;
  // Set up server
-  saddr.sin_family = PF_INET;
-  saddr.sin_addr.s_addr = INADDR_ANY;
-  saddr.sin_port = htons(port);
-  sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-  if ( sock==INVALID_SOCKET )
-  {
-    printf("socket() failed\n");
-    return INVALID_SOCKET;
-  }
+	saddr.sin_family = PF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = htons(port);
+	sock = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+	if ( sock==INVALID_SOCKET )
+	{
+		printf("socket() failed\n");
+		return INVALID_SOCKET;
+	}
 
-  int reuse=1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int))< 0)
-  {
-    close(sock);
-    printf("setsockopt(SO_REUSEADDR) failed\n");
-    return INVALID_SOCKET;
-  }
+	int32_t reuse=1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int32_t))< 0)
+	{
+		close(sock);
+		printf("setsockopt(SO_REUSEADDR) failed\n");
+		return INVALID_SOCKET;
+	}
 
-  if ( bind(sock, (struct sockaddr*)&saddr, sizeof(struct sockaddr))==SOCKET_ERROR )
-  {
-    close(sock);
-    printf("bind() failed (Port:%d)\n",port);
-    return INVALID_SOCKET;
-  }
-  if (listen(sock, 1) == SOCKET_ERROR)
-  {
-    close(sock);
-    printf("listen() failed\n");
-    return INVALID_SOCKET;
-  }
-  return sock;
+	if ( bind(sock, (struct sockaddr*)&saddr, sizeof(struct sockaddr))==SOCKET_ERROR )
+	{
+		close(sock);
+		printf("bind() failed (Port:%d)\n",port);
+		return INVALID_SOCKET;
+	}
+	if (listen(sock, 1) == SOCKET_ERROR)
+	{
+		close(sock);
+		printf("listen() failed\n");
+		return INVALID_SOCKET;
+	}
+	return sock;
 }
 
 
-int CreateClientSockTcp(unsigned int netip, int port)
+SOCKET CreateClientSockTcp(unsigned int netip, int port)
 {
-  int sock;
-  struct sockaddr_in saddr;
-         
-  sock = socket(PF_INET,SOCK_STREAM,0);
-  if( sock<0 ) {
-    //printf("Invalid Socket\n");
-    return INVALID_SOCKET;
-  }
+	SOCKET sock;
+	struct sockaddr_in saddr;
 
-  int optVal = TRUE;
-  if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optVal, sizeof(int))==-1) {
-    close(sock);
-    return INVALID_SOCKET;
-  }
+	sock = socket(PF_INET,SOCK_STREAM,0);
+	if( sock<0 ) {
+		//printf("Invalid Socket\n");
+		return INVALID_SOCKET;
+	}
 
-  memset(&saddr,0, sizeof(saddr));
-  saddr.sin_family = PF_INET;
-  saddr.sin_port = htons(port);
-  saddr.sin_addr.s_addr = netip;
+	int32_t optVal = TRUE;
+	if (setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (char*)&optVal, sizeof(int32_t))==-1) {
+		close(sock);
+		return INVALID_SOCKET;
+	}
 
-  if( connect(sock,(struct sockaddr *)&saddr,sizeof(struct sockaddr_in)) != 0)
-  {
-    close(sock);
-    return INVALID_SOCKET;
-  }
-  return sock;
+	memset(&saddr,0, sizeof(saddr));
+	saddr.sin_family = PF_INET;
+	saddr.sin_port = htons(port);
+	saddr.sin_addr.s_addr = netip;
+
+	if( connect(sock,(struct sockaddr *)&saddr,sizeof(struct sockaddr_in)) != 0)
+	{
+		close(sock);
+		return INVALID_SOCKET;
+	}
+	return sock;
 }
 
 
@@ -325,9 +322,9 @@ int CreateClientSockTcp(unsigned int netip, int port)
 
 int CreateClientSockTcp_nonb(unsigned int netip, int port)
 {
-	int ret, flags, error;
+	int32_t ret, flags, error;
 	socklen_t len;
-	int sockfd;
+	SOCKET sockfd;
 	struct sockaddr_in saddr;
 
 	sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -336,10 +333,12 @@ int CreateClientSockTcp_nonb(unsigned int netip, int port)
 	flags = fcntl(sockfd,F_GETFL);
 	if (flags<0) {
 		close(sockfd);
+		printf("socket: fcntl GETFL failed\n");
 		return INVALID_SOCKET;
- 	}
+	}
 	if ( fcntl(sockfd,F_SETFL,flags|O_NONBLOCK)<0 ) {
 		close(sockfd);
+		printf("socket: fcntl SETFL failed\n");
 		return INVALID_SOCKET;
 	}
 
@@ -347,7 +346,7 @@ int CreateClientSockTcp_nonb(unsigned int netip, int port)
 	saddr.sin_family = AF_INET;
 	saddr.sin_port = htons(port);
 	saddr.sin_addr.s_addr = netip;
-
+	errno = 0;
 	do {
 		ret = connect( sockfd, (struct sockaddr *)&saddr, sizeof(struct sockaddr_in) );
 	} while ( ret && (errno==EINTR) );
@@ -402,69 +401,69 @@ int CreateClientSockTcp_nonb(unsigned int netip, int port)
 	return sockfd;
 }
 
-int CreateServerSockTcp_nonb(int port)
+SOCKET CreateServerSockTcp_nonb(int32_t port)
 {
-  int sock;
-  struct sockaddr_in saddr;
+	SOCKET sock;
+	struct sockaddr_in saddr;
  // Set up server
-  saddr.sin_family = AF_INET;
-  saddr.sin_addr.s_addr = INADDR_ANY;
-  saddr.sin_port = htons(port);
+	saddr.sin_family = AF_INET;
+	saddr.sin_addr.s_addr = INADDR_ANY;
+	saddr.sin_port = htons(port);
 
-  struct protoent *ptrp;
-  int p_proto;
-  if ((ptrp = getprotobyname("tcp"))) p_proto = ptrp->p_proto; else p_proto = 6;
+	struct protoent *ptrp;
+	int32_t p_proto;
+	if ((ptrp = getprotobyname("tcp"))) p_proto = ptrp->p_proto; else p_proto = 6;
 
-  sock = socket(AF_INET, SOCK_STREAM, p_proto);
-  if ( sock==INVALID_SOCKET )
-  {
-    printf("socket() failed\n");
-    return INVALID_SOCKET;
-  }
+	sock = socket(AF_INET, SOCK_STREAM, p_proto);
+	if ( sock==INVALID_SOCKET )
+	{
+		printf("socket() failed\n");
+		return INVALID_SOCKET;
+	}
 
-  int flgs=fcntl(sock,F_GETFL);
-  if(flgs<0) {
-	close(sock);
-	printf("socket: fcntl GETFL failed\n");
-    return INVALID_SOCKET;
-  }
-  if ( fcntl(sock,F_SETFL,flgs|O_NONBLOCK)<0 ) {
-	close(sock);
-	printf("socket: fcntl SETFL failed\n");
-    return INVALID_SOCKET;
-  }
+	int32_t flgs=fcntl(sock,F_GETFL);
+	if(flgs<0) {
+		close(sock);
+		printf("socket: fcntl GETFL failed\n");
+		return INVALID_SOCKET;
+	}
+	if ( fcntl(sock,F_SETFL,flgs|O_NONBLOCK)<0 ) {
+		close(sock);
+		printf("socket: fcntl SETFL failed\n");
+		return INVALID_SOCKET;
+	}
 
-  int reuse=1;
-  if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int))< 0)
-  {
-    close(sock);
-    printf("setsockopt(SO_REUSEADDR) failed\n");
-    return INVALID_SOCKET;
-  }
+	int32_t reuse=1;
+	if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (char *)&reuse, sizeof(int32_t))< 0)
+	{
+		close(sock);
+		printf("setsockopt(SO_REUSEADDR) failed\n");
+		return INVALID_SOCKET;
+	}
 
-  if ( bind(sock, (struct sockaddr*)&saddr, sizeof(struct sockaddr))==SOCKET_ERROR )
-  {
-    close(sock);
-    printf("bind() failed (Port:%d)\n",port);
-    return INVALID_SOCKET;
-  }
-  if (listen(sock, SOMAXCONN) == SOCKET_ERROR)
-  {
-    close(sock);
-    printf("listen() failed\n");
-    return INVALID_SOCKET;
-  }
-  return sock;
+	if ( bind(sock, (struct sockaddr*)&saddr, sizeof(struct sockaddr))==SOCKET_ERROR )
+	{
+		close(sock);
+		printf("bind() failed (Port:%d)\n",port);
+		return INVALID_SOCKET;
+	}
+	if (listen(sock, SOMAXCONN) == SOCKET_ERROR)
+	{
+		close(sock);
+		printf("listen() failed\n");
+		return INVALID_SOCKET;
+	}
+	return sock;
 }
 
 
-int recv_nonb1(int sock,uint8 *buf,int len,int timeout)
+int32_t recv_nonb1(SOCKET sock,uint8_t *buf,int32_t len,int32_t timeout)
 {
-	int retval;
-    int index = 0;
+	int32_t retval;
+	int32_t index = 0;
 
-	uint32 ticks = GetTickCount()+timeout; // timeout ~ 2sec
-	uint32 now;
+	uint32_t ticks = GetTickCount()+timeout; // timeout ~ 2sec
+	uint32_t now;
 	do {
 		now = GetTickCount();
 		if ( ticks<now ) {
@@ -485,7 +484,7 @@ int recv_nonb1(int sock,uint8 *buf,int len,int timeout)
 */
 				do {
 					errno = 0;
-			  		retval = recv(sock, buf+index, len-index, MSG_NOSIGNAL|MSG_DONTWAIT);
+						retval = recv(sock, buf+index, len-index, MSG_NOSIGNAL|MSG_DONTWAIT);
 				} while(retval<0 && errno==EINTR);
 				switch (retval) {
 					case -1:
@@ -515,13 +514,13 @@ int recv_nonb1(int sock,uint8 *buf,int len,int timeout)
 	return index; 
 }
 
-int recv_nonb2(int sock,uint8 *buf,int len,int timeout)
+int32_t recv_nonb2(SOCKET sock,uint8_t *buf,int32_t len,int32_t timeout)
 {
-	int retval;
-    int index = 0;
+	int32_t retval;
+	int32_t index = 0;
 
-	uint32 ticks = GetTickCount()+timeout; // timeout ~ 2sec
-	uint32 now;
+	uint32_t ticks = GetTickCount()+timeout; // timeout ~ 2sec
+	uint32_t now;
 	do {
 		now = GetTickCount();
 		if ( ticks<now ) {
@@ -539,7 +538,7 @@ int recv_nonb2(int sock,uint8 *buf,int len,int timeout)
 			case 0: // timeout
 				return -2;
 			default: // nb descriptors
-		  		retval = recv(sock, buf+index, len-index, MSG_NOSIGNAL);
+					retval = recv(sock, buf+index, len-index, MSG_NOSIGNAL);
 				switch (retval) {
 					case -1:
 						if (errno != EWOULDBLOCK && errno != EAGAIN && errno != EINTR) return -1;
@@ -558,18 +557,19 @@ int recv_nonb2(int sock,uint8 *buf,int len,int timeout)
 // =0 : disconnected
 // =-1 : error
 // =-2 : timeout
-int recv_nonb(int sock,uint8 *buf,int len,int timeout)
+int32_t recv_nonb(SOCKET sock,uint8_t *buf,int32_t len,int32_t timeout)
 {
-	int ret;
-    int index = 0;
-	uint32 last = GetTickCount()+timeout;
+	int32_t ret;
+	int32_t index = 0;
+
+	uint32_t last = GetTickCount()+timeout;
 	while (1) {
-		uint32 now = GetTickCount();
+		uint32_t now = GetTickCount();
 		if (now>last) return -2; // timeout
-		struct pollfd pfd;
-		pfd.fd = sock;
-		pfd.events = POLLIN | POLLPRI;
-		ret = poll(&pfd, 1, last-now);
+				struct pollfd pfd;
+				pfd.fd = sock;
+				pfd.events = POLLIN | POLLPRI;
+				ret = poll(&pfd, 1, last-now);
 		if (ret>0) {
 			if ( pfd.revents & (POLLIN|POLLPRI) ) {
 				ret = recv( sock, buf+index, len-index, MSG_NOSIGNAL|MSG_DONTWAIT );
@@ -588,13 +588,13 @@ int recv_nonb(int sock,uint8 *buf,int len,int timeout)
 }
 
 
-int send_nonb2(int sock,uint8 *buf,int len,int to)
+int32_t send_nonb2(SOCKET sock,uint8_t *buf,int32_t len,int32_t to)
 {
-	int retval;
-	int index = 0;
+	int32_t retval;
+	int32_t index = 0;
 
-	uint32 ticks = GetTickCount()+to;
-	uint32 now;
+	uint32_t ticks = GetTickCount()+to;
+	uint32_t now;
 	do {
 
 		now = GetTickCount();
@@ -607,21 +607,21 @@ int send_nonb2(int sock,uint8 *buf,int len,int to)
 		struct timeval timeout;
 		timeout.tv_usec = (to%1000)*1000;
 		timeout.tv_sec = to/1000;
-	    FD_ZERO(&writefds);
-	    FD_SET(sock, &writefds);
-        retval = select( sock+1, NULL, &writefds, NULL, &timeout );
+		FD_ZERO(&writefds);
+		FD_SET(sock, &writefds);
+		retval = select( sock+1, NULL, &writefds, NULL, &timeout );
 
 		switch (retval) {
 			case -1: // error
 				if ( (errno == EINTR)||(errno==EWOULDBLOCK)||(errno==EAGAIN)||(errno==0) ) continue;
-				printf("send error %d(%d)\n",retval,errno);
-				return retval; // disconnection
+					printf("send error %d(%d)\n",retval,errno);
+					return retval; // disconnection
 			case 0: // timeout
 				printf("send error timeout\n");
 				return retval;
 			default: // nb. desriptors
 				do {
-			  		retval = send(sock, buf+index, len-index, MSG_NOSIGNAL|MSG_DONTWAIT);
+						retval = send(sock, buf+index, len-index, MSG_NOSIGNAL|MSG_DONTWAIT);
 				} while( (retval<0)&&((errno==EINTR)||(errno==EWOULDBLOCK)||(errno==EAGAIN)||(errno==0)) );
 				if(retval>0) index+=retval;
 		}
@@ -631,58 +631,57 @@ int send_nonb2(int sock,uint8 *buf,int len,int to)
 }
 
 
-int send_nonb(int sock,uint8 *buf,int len,int to)
+int32_t send_nonb(SOCKET sock,uint8_t *buf,int32_t len,int32_t to)
 {
-	int remain, got;
-	uint8 *ptr;
-	int  error;
+	int32_t remain, got;
+	uint8_t *ptr;
+	int32_t error;
 	struct timeval timeout;
 
-    error           = 0;
+	error = 0;
 	timeout.tv_usec = (to%1000)*1000;
 	timeout.tv_sec = to/1000;
-    remain = len;
-    ptr    = buf;
+	remain = len;
+	ptr = buf;
 
-
-	uint32 ticks = GetTickCount()+to;
-	uint32 now;
-    while (remain) {
+	uint32_t ticks = GetTickCount()+to;
+	uint32_t now;
+	while (remain) {
 		now = GetTickCount();
 		if ( ticks<now ) {
 			//printf("send_nonb(): timeout\n");
 			return FALSE; // timeout
 		}
-/*	    FD_ZERO(&writefds);
-	    FD_SET(sock, &writefds);
-        error = select( sock+1, NULL, &writefds, NULL, &timeout );
-//        if (error == 0) {
-//            errno = ETIMEDOUT;
-//            return FALSE;
+/*		FD_ZERO(&writefds);
+		FD_SET(sock, &writefds);
+		error = select( sock+1, NULL, &writefds, NULL, &timeout );
+//		if (error == 0) {
+//			errno = ETIMEDOUT;
+//			return FALSE;
 
-//        } else 
+//		} else 
 
 		if (error < 0) {
 			if ( (!errno)||(errno==EINTR)||(errno==EWOULDBLOCK)||(errno==EAGAIN) ) continue;
 			return -1;
-        }
+		}
 		else {
 */
-            got = send(sock, (void *) ptr, (size_t) remain, MSG_NOSIGNAL|MSG_DONTWAIT);
-            if (got >= 0) {
-                remain -= got;
-                ptr    += got;
-            } else if (
-                errno != EWOULDBLOCK &&
-                errno != EAGAIN      &&
-                errno != EINTR       &&
-                errno != 0
-            ) {
+			got = send(sock, (void *) ptr, (size_t) remain, MSG_NOSIGNAL|MSG_DONTWAIT);
+			if (got >= 0) {
+				remain -= got;
+				ptr += got;
+			} else if (
+				errno != EWOULDBLOCK &&
+				errno != EAGAIN &&
+				errno != EINTR &&
+				errno != 0
+			) {
 				//printf(" send_nonb: error(%d) (sent %d from %d)\n", errno, len-remain,len );
-                return FALSE;
-            }
-//        }
-    }
-    return TRUE;
+				return FALSE;
+			}
+//		}
+	}
+	return TRUE;
 }
 

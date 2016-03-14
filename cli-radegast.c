@@ -37,7 +37,7 @@ void rdgd_disconnect_srv(struct cs_server_data *srv)
 	srv->host->checkiptime = 0; // maybe ip changed
 }
 
-int rdgd_connect_srv(struct cs_server_data *srv, int fd)
+int32_t rdgd_connect_srv(struct cs_server_data *srv, int32_t fd)
 {
 	static char msg[]= "Connected";
 	uchar buf[10];
@@ -63,12 +63,12 @@ int rdgd_connect_srv(struct cs_server_data *srv, int fd)
 
 ///////////////////////////////////////////////////////////////////////////////
 //01 3E 020101 06083030303030303330 070430303036 080102 0A020100 0322 80 001F D4 AB B2 CD C6 9B B4 54 11 0E 82 74 41 21 3D DC 87 70 E9 3E A1 41 E1 FC 67 3E 01 7E 97 EA DC 
-int rdgd_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
+int32_t rdgd_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 {
 	unsigned char buf[CWS_NETMSGSIZE];
 	buf[0] = 0x01;
 	//buf[1] = len;
-	int index = 2;
+	int32_t index = 2;
 	//Caid Byte Entry
 	buf[index]=2; buf[index+1]=1;
 	buf[index+2] = ecm->caid>>8;
@@ -102,7 +102,7 @@ int rdgd_sendecm_srv(struct cs_server_data *srv, ECM_DATA *ecm)
 
 void rdgd_srv_recvmsg(struct cs_server_data *srv)
 {
-	int len;
+	int32_t len;
 	ECM_DATA *ecm;
 	unsigned char buf[CWS_NETMSGSIZE];
 

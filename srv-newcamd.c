@@ -27,7 +27,7 @@ void cs_cli_recvmsg(struct cs_client_data *cli,	struct cardserver_data *cs);
 uint cs_check_sendcw();
 
 
-struct cs_client_data *getnewcamdclientbyid(struct cardserver_data *cs, uint32 id)
+struct cs_client_data *getnewcamdclientbyid(struct cardserver_data *cs, uint32_t id)
 {
 	struct cs_client_data *cli = cs->client;
 	while (cli) {
@@ -53,24 +53,25 @@ void cs_disconnect_cli(struct cs_client_data *cli)
 
 struct cs_clicon {
 	struct cardserver_data *cs;
-	int sock;
-	uint32 ip;
+	int32_t sock;
+	uint32_t ip;
 };
 
 
 void *th_cs_connect_cli(struct cs_clicon *param)
 {
-    char passwdcrypt[120];
+	char passwdcrypt[120];
 	unsigned char keymod[14];
-	int i,index;
+	int32_t i,index;
 	unsigned char sessionkey[16];
 	struct cs_custom_data clicd;
 	unsigned char buf[CWS_NETMSGSIZE];
 
 	struct cardserver_data *cs = param->cs;
-	int sock = param->sock;
-	uint32 ip = param->ip;
+	int32_t sock = param->sock;
+	uint32_t ip = param->ip;
 	free(param);
+
 	// Create random deskey
 	for (i=0; i<14; i++) keymod[i] = 0xff & rand();
 	// Create NewBox ID
@@ -87,7 +88,7 @@ void *th_cs_connect_cli(struct cs_clicon *param)
 		pthread_exit(NULL);
 	}
 
-	uint32 ticks = GetTickCount();
+	uint32_t ticks = GetTickCount();
 	// Calc SessionKey
 	//debugf(" DES Key: "); debughex(keymod,14);
 	des_login_key_get(keymod, cs->key, 14, sessionkey);
@@ -128,7 +129,7 @@ void *th_cs_connect_cli(struct cs_clicon *param)
 	pthread_mutex_lock(&prg.lockcli);
 	index = 3;
 	struct cs_client_data *usr = cs->client;
-	int found = 0;
+	int32_t found = 0;
 	while (usr) {
 		if (!strcmp(usr->user,(char*)&buf[index])) {
 			found=1;
@@ -198,7 +199,7 @@ void *th_cs_connect_cli(struct cs_clicon *param)
 
 void *cs_connect_cli_thread(void *param)
 {
-	int clientsock;
+	int32_t clientsock;
 	struct sockaddr_in clientaddr;
 	socklen_t socklen = sizeof(struct sockaddr);
 	// Connect Clients 
@@ -208,7 +209,7 @@ void *cs_connect_cli_thread(void *param)
 		pthread_mutex_lock(&prg.locksrvcs);
 
 		struct pollfd pfd[MAX_CSPORTS];
-		int pfdcount = 0;
+		int32_t pfdcount = 0;
 
 		struct cardserver_data *cs = cfg.cardserver;
 		while(cs) {
@@ -220,7 +221,7 @@ void *cs_connect_cli_thread(void *param)
 			cs = cs->next;
 		}
 
-		int retval = poll(pfd, pfdcount, 3000);
+		int32_t retval = poll(pfd, pfdcount, 3000);
 
 		if (retval>0) {
 			struct cardserver_data *cs = cfg.cardserver;
@@ -256,10 +257,10 @@ void *cs_connect_cli_thread(void *param)
 }
 
 
-void cs_store_ecmclient(struct cardserver_data *cs, int ecmid, struct cs_client_data *cli, int climsgid)
+void cs_store_ecmclient(struct cardserver_data *cs, int32_t ecmid, struct cs_client_data *cli, int32_t climsgid)
 {
 	//check for last ecm recv time
-	uint32 ticks = GetTickCount();
+	uint32_t ticks = GetTickCount();
 	cli->ecm.dcwtime = cli->dcwtime;
 	cli->ecm.recvtime = ticks;
 	cli->ecm.id = ecmid;
@@ -271,7 +272,7 @@ void cs_store_ecmclient(struct cardserver_data *cs, int ecmid, struct cs_client_
 void cs_cli_recvmsg(struct cs_client_data *cli,	struct cardserver_data *cs)
 {
 	struct cs_custom_data clicd; // Custom data
-	int len;
+	int32_t len;
 	unsigned char buf[CWS_NETMSGSIZE];
 	unsigned char data[CWS_NETMSGSIZE]; // for other use
 
@@ -385,7 +386,7 @@ void cs_cli_recvmsg(struct cs_client_data *cli,	struct cardserver_data *cs)
 					pthread_mutex_lock(&prg.lockecm); //###
 
 					// Search for ECM
-					int ecmid = search_ecmdata_dcw( data,  len, clicd.sid); // dont get failed ecm request from cache
+					int32_t ecmid = search_ecmdata_dcw( data,  len, clicd.sid); // dont get failed ecm request from cache
 					if ( ecmid!=-1 ) {
 						ECM_DATA *ecm=getecmbyid(ecmid);
 						ecm->lastrecvtime = GetTickCount();

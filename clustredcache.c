@@ -24,20 +24,20 @@
 
 struct cache_data {
 	unsigned char status; // 0:Wait; 1: dcw received
-	unsigned int recvtime;
+	int32_t recvtime;
 	unsigned char tag;
 	unsigned short sid;
 	unsigned short onid;
 	unsigned short caid;
-	unsigned int hash;
-	unsigned int prov;
+	int32_t hash;
+	int32_t prov;
 	unsigned char cw[32]; // 16 por defecto
-	int peerid;
+	int32_t peerid;
 
-	uint sendpipe; // Send DCW to cecm_pipe non null send dcw to ecmpipe (it is the ecm recvtime frompipe
-	int sendcache; // local cache send status 0:none, 1: request, 2: reply
+	uint32_t sendpipe; // Send DCW to cecm_pipe non null send dcw to ecmpipe (it is the ecm recvtime frompipe
+	int32_t sendcache; // local cache send status 0:none, 1: request, 2: reply
 
-	//int lastid[2]; // list by caid & tag lastid[0]->0x80  lastid[1]->0x81
+	//int32_t lastid[2]; // list by caid & tag lastid[0]->0x80  lastid[1]->0x81
 };
 
 #if TARGET == 3
@@ -47,10 +47,10 @@ struct cache_data {
 #endif
 
 struct cache_data cachetab[MAX_CACHETAB];
-int icachetab=0;
-//int fetchlastids[2] = { -1, -1 };
+int32_t icachetab=0;
+//int32_t fetchlastids[2] = { -1, -1 };
 
-int prevcachetab( int index )
+int32_t prevcachetab( int32_t index )
 {
 	if (index<1) index = MAX_CACHETAB-1; else index--; 
 	return index;
@@ -59,7 +59,7 @@ int prevcachetab( int index )
 
 struct cache_data *cache_new( struct cache_data *newdata )
 {
-	int i = icachetab;
+	int32_t i = icachetab;
 	memset( &cachetab[i], 0, sizeof(struct cache_data) );
 	cachetab[i].status = CACHE_STAT_WAIT; // 0:Wait; 1: dcw received
 	cachetab[i].recvtime = GetTickCount();
@@ -78,8 +78,8 @@ struct cache_data *cache_new( struct cache_data *newdata )
 
 struct cache_data *cache_fetch( struct cache_data *thereq )
 {
-	int i = icachetab;
-	uint32 ticks = GetTickCount();
+	int32_t i = icachetab;
+	uint32_t ticks = GetTickCount();
 	do {
 		if (i<1) i = MAX_CACHETAB-1; else i--; 
 		if ( (cachetab[i].recvtime+15000)<ticks ) return NULL;
@@ -96,8 +96,8 @@ struct cache_data *cache_fetch( struct cache_data *thereq )
 	fetchlastids[0] = -1;
 	fetchlastids[1] = -1;
 
-	uint32 ticks = GetTickCount();
-	int i = icachetab;
+	uint32_t ticks = GetTickCount();
+	int32_t i = icachetab;
 	while ( (i=prevcachetab(i)) != icachetab ) {
 		if ( (cachetab[i].recvtime+15000)<ticks ) return NULL;
 		if (cachetab[i].caid==thereq->caid) { // we have the latest data with same caid
@@ -125,7 +125,7 @@ struct cache_data *cache_fetch( struct cache_data *thereq )
 }
 */
 
-int cache_check( struct cache_data *req )
+int32_t cache_check( struct cache_data *req )
 {
 	if ( ((req->tag&0xFE)!=0x80)||!req->caid||!req->hash ) return 0;
 	if (!cfg.faccept0onid && !req->onid ) return 0;
@@ -133,7 +133,7 @@ int cache_check( struct cache_data *req )
 }
 
 
-int cache_check_request( unsigned char tag, unsigned short sid, unsigned short onid, unsigned short caid, unsigned int hash )
+int32_t cache_check_request( unsigned char tag, unsigned short sid, unsigned short onid, unsigned short caid, int32_t hash )
 {
 	if ( ((tag&0xFE)!=0x80)||!caid||!hash ) return 0;
 	if (!cfg.faccept0onid && !onid ) return 0;
@@ -149,7 +149,7 @@ int cache_check_request( unsigned char tag, unsigned short sid, unsigned short o
 // pipe --> cache
 ///////////////////////////////////////////////////////////////////////////////
 
-int pipe_send_cache_find( ECM_DATA *ecm, struct cardserver_data *cs)
+int32_t pipe_send_cache_find( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
 	//send pipe to cache
@@ -167,7 +167,7 @@ int pipe_send_cache_find( ECM_DATA *ecm, struct cardserver_data *cs)
 	return 1;
 }
 
-int pipe_send_cache_request( ECM_DATA *ecm, struct cardserver_data *cs)
+int32_t pipe_send_cache_request( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
 	//send pipe to cache
@@ -192,7 +192,7 @@ int pipe_send_cache_request( ECM_DATA *ecm, struct cardserver_data *cs)
 	return 1;
 }
 
-int pipe_recv_cache_request(uchar *buf,struct cache_data *req)
+int32_t pipe_recv_cache_request(uchar *buf,struct cache_data *req)
 {
 	req->tag = buf[2];
 	req->sid = (buf[3]<<8) | buf[4];
@@ -203,7 +203,7 @@ int pipe_recv_cache_request(uchar *buf,struct cache_data *req)
 }
 
 
-int pipe_send_cache_reply( ECM_DATA *ecm, struct cardserver_data *cs)
+int32_t pipe_send_cache_reply( ECM_DATA *ecm, struct cardserver_data *cs)
 {
 	if ( !cache_check_request(ecm->ecm[0], ecm->sid, cs->onid, ecm->caid, ecm->hash) ) return 0;
 	uchar buf[64]; // 32 por defecto
@@ -244,12 +244,12 @@ int pipe_send_cache_reply( ECM_DATA *ecm, struct cardserver_data *cs)
 
 SOCKET outsock;
 
-void sendtopeer( struct cs_cachepeer_data *peer, unsigned char *buf, int len)
+void sendtopeer( struct cs_cachepeer_data *peer, unsigned char *buf, int32_t len)
 {
 
 	if (peer->host->ip && peer->port) {
 		struct sockaddr_in si_other;
-		int slen=sizeof(si_other);
+		int32_t slen=sizeof(si_other);
 		memset((char *) &si_other, 0, sizeof(si_other));
 		si_other.sin_family = AF_INET;
 		si_other.sin_port = htons( peer->port );
@@ -264,7 +264,7 @@ void sendtopeer( struct cs_cachepeer_data *peer, unsigned char *buf, int len)
 			struct pollfd pfd;
 			pfd.fd = peer->outsock;
 			pfd.events = POLLOUT;
-			int retval = poll(&pfd, 1, 10);
+			int32_t retval = poll(&pfd, 1, 10);
 			if (retval>0) {
 				if ( pfd.revents & (POLLOUT) ) {
 					sendto(peer->outsock, buf, len, 0, (struct sockaddr *)&si_other, slen);
@@ -398,7 +398,6 @@ void cache_send_ping(struct cs_cachepeer_data *peer)
 	buf[27] = 0;
 	buf[28] = 0;
 	sendtopeer( peer, buf, 29);
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -406,7 +405,7 @@ void cache_send_ping(struct cs_cachepeer_data *peer)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-struct cs_cachepeer_data *getpeerbyip(uint32 ip)
+struct cs_cachepeer_data *getpeerbyip(uint32_t ip)
 {
 	struct cs_cachepeer_data *peer = cfg.cachepeer;
 	while(peer) {
@@ -416,7 +415,7 @@ struct cs_cachepeer_data *getpeerbyip(uint32 ip)
 	return NULL;
 }
 
-struct cs_cachepeer_data *getpeerbyaddr(uint32 ip, uint16 port)
+struct cs_cachepeer_data *getpeerbyaddr(uint32_t ip, uint16_t port)
 {
 	struct cs_cachepeer_data *peer = cfg.cachepeer;
 	while(peer) {
@@ -426,7 +425,7 @@ struct cs_cachepeer_data *getpeerbyaddr(uint32 ip, uint16 port)
 	return NULL;
 }
 
-struct cs_cachepeer_data *getpeerbyid(int id)
+struct cs_cachepeer_data *getpeerbyid(int32_t id)
 {
 	struct cs_cachepeer_data *peer = cfg.cachepeer;
 	while(peer) {
@@ -444,7 +443,7 @@ struct cs_cachepeer_data *getpeerbyid(int id)
 
 void cache_recvmsg()
 {
-	unsigned int recv_ip;
+	int32_t recv_ip;
 	unsigned short recv_port;
 	unsigned char buf[1024];
 	struct sockaddr_in si_other;
@@ -452,7 +451,7 @@ void cache_recvmsg()
 	uint ticks = GetTickCount();
 	struct cs_cachepeer_data *peer;
 
-	int received = recvfrom( cfg.cachesock, buf, sizeof(buf), 0, (struct sockaddr*)&si_other, &slen);
+	int32_t received = recvfrom( cfg.cachesock, buf, sizeof(buf), 0, (struct sockaddr*)&si_other, &slen);
 	memcpy( &recv_ip, &si_other.sin_addr, 4);
 	recv_port = ntohs(si_other.sin_port);
 
@@ -639,7 +638,7 @@ void cache_recvmsg()
 				case TYPE_PINGREQ:
 					// Check Peer
 					peer = cfg.cachepeer;
-					int port = (buf[11]<<8)|buf[12];
+					int32_t port = (buf[11]<<8)|buf[12];
 					struct cs_cachepeer_data *peerip = NULL;
 					while (peer) {
 						if (peer->host->ip==recv_ip) {
@@ -659,7 +658,7 @@ void cache_recvmsg()
 								}
 								else strcpy(peer->program,"CSP");
 								// Check for extended reply
-								int index = 13;
+								int32_t index = 13;
 								while (received>index) {
 									if ( (index+buf[index+1]+2)>received ) break;
 									switch(buf[index]) {
@@ -721,7 +720,7 @@ void cache_recvmsg()
 					if (buf[8]!='N') break;
 					if ( buf[7]!=('N'^buf[1]^buf[2]^buf[3]^buf[4]^buf[5]^buf[6]) ) break;
 					// Get Peer
-					int peerid = (buf[4]<<8) | buf[5];
+					int32_t peerid = (buf[4]<<8) | buf[5];
 					peer = cfg.cachepeer;
 					while (peer) {
 						if ( (peer->host->ip==recv_ip)&&(peer->id==peerid) ) {
@@ -788,7 +787,7 @@ void cache_pipe_recvmsg()
 	uint ticks = GetTickCount();
 	struct cache_data *pcache;
 
-	int len =  pipe_recv( srvsocks[1], buf );
+	int32_t len = pipe_recv( srvsocks[1], buf );
 	if (len>0) {
 		//debugf(" Recv from Cache Pipe\n"); debughex(buf,len);
 		switch(buf[0]) {
@@ -997,7 +996,7 @@ void cache_check_peers()
 
 void *cache_thread(void *param)
 {
-	uint32 chkticks = 0;
+	uint32_t chkticks = 0;
 	prg.pid_cache = syscall(SYS_gettid);
 	while(1) {
 		if (cfg.cachesock>0) {
@@ -1009,7 +1008,7 @@ void *cache_thread(void *param)
 			struct pollfd pfd;
 			pfd.fd = cfg.cachesock;
 			pfd.events = POLLIN | POLLPRI;
-			int retval = poll(&pfd, 1, 3000);
+			int32_t retval = poll(&pfd, 1, 3000);
 
 			if ( retval>0 ) {
 				if ( pfd.revents & (POLLIN|POLLPRI) ) {
@@ -1038,7 +1037,7 @@ void *cachepipe_thread(void *param)
 		struct pollfd pfd;
 		pfd.fd = srvsocks[1];
 		pfd.events = POLLIN | POLLPRI;
-		int retval = poll(&pfd, 1, 3000);
+		int32_t retval = poll(&pfd, 1, 3000);
 		if ( retval>0 ) {
 			if ( pfd.revents & (POLLIN|POLLPRI) ) {
 				pthread_mutex_lock( &prg.lockcache );
@@ -1059,7 +1058,7 @@ void *cachepipe_thread(void *param)
 }
 
 
-int start_thread_cache()
+int32_t start_thread_cache()
 {
 	create_prio_thread(&prg.tid_cache, (threadfn)cache_thread,NULL, 50);
 	create_prio_thread(&prg.tid_cache, (threadfn)cachepipe_thread,NULL, 20);

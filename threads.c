@@ -40,25 +40,25 @@
 
 int create_prio_thread(pthread_t *tid, threadfn func, void *arg, int newprio) //0 to 99
 {
-  pthread_attr_t tattr;
-  int ret;
-  struct sched_param param;
+	pthread_attr_t tattr;
+	int ret;
+	struct sched_param param;
 
-  /* initialized with default attributes */
-  ret = pthread_attr_init (&tattr);
+	/* initialized with default attributes */
+	ret = pthread_attr_init (&tattr);
 
-  /* safe to get existing scheduling param */
-  ret = pthread_attr_getschedparam (&tattr, &param);
+	/* safe to get existing scheduling param */
+	ret = pthread_attr_getschedparam (&tattr, &param);
 
-  /* set the priority; others are unchanged */
-  param.sched_priority = newprio;
+	/* set the priority; others are unchanged */
+	param.sched_priority = newprio;
 
-  /* setting the new scheduling param */
-  ret = pthread_attr_setschedparam (&tattr, &param);
+	/* setting the new scheduling param */
+	ret = pthread_attr_setschedparam (&tattr, &param);
 
 	pthread_attr_setstacksize(&tattr, 1024*100);
 
-  /* with new priority specified */
+	/* with new priority specified */
 	while (1) {
 		ret = pthread_create (tid, &tattr, func, arg);
 		if (ret==EAGAIN) {

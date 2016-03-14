@@ -40,7 +40,7 @@
 
 int rdgd_message_receive(int sock, unsigned char *buffer, int timeout)
 {
-	int len;
+	int32_t len;
 	unsigned char netbuf[300];
 
 	if (sock==INVALID_SOCKET) {
@@ -86,16 +86,16 @@ int rdgd_message_send(int sock, unsigned char *buf, int len)
 // -1: not yet
 // 0: disconnect
 // >0: ok
-int rdgd_check_message(int sock)
+int32_t rdgd_check_message(int32_t sock)
 {
-	int len;
+	int32_t len;
 	unsigned char netbuf[300];
 
 	len = recv(sock, netbuf, 2, MSG_PEEK|MSG_NOSIGNAL|MSG_DONTWAIT);
 	if (len==0) return 0;
 	if (len!=2) return -1;
 
-	int datasize = netbuf[1];
+	int32_t datasize = netbuf[1];
 	len = recv(sock, netbuf, 2+datasize, MSG_PEEK|MSG_NOSIGNAL|MSG_DONTWAIT);
 
 	if (len!=2+datasize) return -1;

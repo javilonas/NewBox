@@ -22,7 +22,7 @@ void *mg_connect_cli_thread(void *param);
 uint mg_check_sendcw();
 
 
-struct mg_client_data *getmgcamdclientbyid(uint32 id)
+struct mg_client_data *getmgcamdclientbyid(uint32_t id)
 {
 	struct mg_client_data *cli = cfg.mgcamd.client;
 	while (cli) {
@@ -55,22 +55,22 @@ void mg_disconnect_cli(struct mg_client_data *cli)
 
 
 struct mg_clicon {
-	int sock;
-	uint32 ip;
+	int32_t sock;
+	uint32_t ip;
 };
 
 
 void *th_mg_connect_cli(struct mg_clicon *param)
 {
-    char passwdcrypt[120];
+	char passwdcrypt[120];
 	unsigned char keymod[14];
-	int i,index;
+	int32_t i,index;
 	unsigned char sessionkey[16];
 	struct cs_custom_data clicd;
 	unsigned char buf[CWS_NETMSGSIZE];
 
-	int sock = param->sock;
-	uint32 ip = param->ip;
+	int32_t sock = param->sock;
+	uint32_t ip = param->ip;
 	free(param);
 
 	// Create random deskey
@@ -86,7 +86,7 @@ void *th_mg_connect_cli(struct mg_clicon *param)
 		pthread_exit(NULL);
 	}
 
-	uint32 ticks = GetTickCount();
+	uint32_t ticks = GetTickCount();
 	// Calc SessionKey
 	des_login_key_get(keymod, cfg.mgcamd.key, 14, sessionkey);
 
@@ -122,7 +122,7 @@ void *th_mg_connect_cli(struct mg_clicon *param)
 	pthread_mutex_lock(&prg.lockclimg);
 	index = 3;
 	struct mg_client_data *usr = cfg.mgcamd.client;
-	int found = 0;
+	int32_t found = 0;
 	while (usr) {
 		if (!strcmp(usr->user,(char*)&buf[index])) {
 			if (usr->disabled) { // Connect only enabled clients
@@ -163,7 +163,7 @@ void *th_mg_connect_cli(struct mg_clicon *param)
 		buf[1] = 0;
 		buf[2] = 0;
 
-		//clicd.msgid = 0;
+		clicd.msgid = 0;
 		clicd.sid = 0x6E73;
 		clicd.caid = 0;
 		clicd.provid = 0x14000000; // mgcamd protocol version?
@@ -199,7 +199,7 @@ void *th_mg_connect_cli(struct mg_clicon *param)
 
 void *mg_connect_cli_thread(void *param)
 {
-	int clientsock;
+	int32_t clientsock;
 	struct sockaddr_in clientaddr;
 	socklen_t socklen = sizeof(struct sockaddr);
 	// Connect Clients 
@@ -211,7 +211,7 @@ void *mg_connect_cli_thread(void *param)
 			struct pollfd pfd;
 			pfd.fd = cfg.mgcamd.handle;
 			pfd.events = POLLIN | POLLPRI;
-			int retval = poll(&pfd, 1, 3000);
+			int32_t retval = poll(&pfd, 1, 3000);
 			if ( retval>0 ) {
 				clientsock = accept(cfg.mgcamd.handle, (struct sockaddr*)&clientaddr, &socklen );
 				if (clientsock<0) {
@@ -220,7 +220,7 @@ void *mg_connect_cli_thread(void *param)
 						debugf(" mgcamd: Accept failed (%d)\n",errno);
 					}
 				}
-				else {			
+				else {
 					debugf(" mgcamd: new client Connection(%d)...%s\n", clientsock, ip2string(clientaddr.sin_addr.s_addr) );
 					SetSocketKeepalive(clientsock); 
 					struct mg_clicon *clicondata = malloc( sizeof(struct mg_clicon) );
@@ -244,10 +244,10 @@ void *mg_connect_cli_thread(void *param)
 ///////////////////////////////////////////////////////////////////////////////
 
 
-void mg_store_ecmclient( int ecmid, struct mg_client_data *cli, int climsgid)
+void mg_store_ecmclient( int32_t ecmid, struct mg_client_data *cli, int32_t climsgid)
 {
 	//check for last ecm recv time
-	uint32 ticks = GetTickCount();
+	uint32_t ticks = GetTickCount();
 	cli->ecm.dcwtime = cli->dcwtime;
 	cli->ecm.recvtime = ticks;
 	cli->ecm.id = ecmid;
@@ -259,8 +259,8 @@ void mg_store_ecmclient( int ecmid, struct mg_client_data *cli, int climsgid)
 void mg_cli_recvmsg(struct mg_client_data *cli)
 {
 	struct cs_custom_data clicd; // Custom data
-	struct cardserver_data *cs=NULL; 
-	int len;
+	struct cardserver_data *cs=NULL;
+	int32_t len;
 	unsigned char buf[CWS_NETMSGSIZE];
 	unsigned char data[CWS_NETMSGSIZE]; // for other use
 
@@ -308,7 +308,7 @@ void mg_cli_recvmsg(struct mg_client_data *cli)
 					cs_message_send(cli->handle, &clicd, buf, 15+11, cli->sessionkey);
 
 					if (cli->csport[0]) {
-						int i;
+						int32_t i;
 						for(i=0;i<MAX_CSPORTS;i++) {
 							if (!cli->csport[i]) break;
 							cs = getcsbyport(cli->csport[i]);
@@ -323,7 +323,7 @@ void mg_cli_recvmsg(struct mg_client_data *cli)
 						}
 					}
 					else if (cfg.mgcamd.csport[0]) {
-						int i;
+						int32_t i;
 						for(i=0;i<MAX_CSPORTS;i++) {
 							if (!cfg.mgcamd.csport[i]) break;
 							cs = getcsbyport(cfg.mgcamd.csport[i]);
@@ -378,7 +378,7 @@ void mg_cli_recvmsg(struct mg_client_data *cli)
 						debugf(" <|> decode failed to mgcamd client '%s' ch %04x:%06x:%04x Invalid CAID\n", cli->user,clicd.caid,clicd.provid,clicd.sid);
 						break;
 					}
-					int i,j,port;
+					int32_t i,j,port;
 					if (cli->csport[0]) {
 						for(i=0; i<MAX_CSPORTS; i++) {
 							port = cli->csport[i];
@@ -445,7 +445,7 @@ void mg_cli_recvmsg(struct mg_client_data *cli)
 					pthread_mutex_lock(&prg.lockecm); //###
 
 					// Search for ECM
-					int ecmid = search_ecmdata_dcw( data,  len, clicd.sid); // dont get failed ecm request from cache
+					int32_t ecmid = search_ecmdata_dcw( data,  len, clicd.sid); // dont get failed ecm request from cache
 					if ( ecmid!=-1 ) {
 						ECM_DATA *ecm=getecmbyid(ecmid);
 						ecm->lastrecvtime = GetTickCount();
@@ -571,7 +571,7 @@ void mg_senddcw_cli(struct mg_client_data *cli)
 
 	ECM_DATA *ecm = getecmbyid(cli->ecm.id);
 	//FREEZE
-	int enablefreeze;
+	int32_t enablefreeze;
 	if ( (cli->ecm.laststatus=1)&&(cli->ecm.lastcaid==ecm->caid)&&(cli->ecm.lastprov==ecm->provid)&&(cli->ecm.lastsid==ecm->sid)&&(cli->lastdcwtime+200<GetTickCount()) )
 		enablefreeze = 1; else enablefreeze = 0;
 	//
@@ -619,7 +619,7 @@ void mg_senddcw_cli(struct mg_client_data *cli)
 ///////////////////////////////////////////////////////////////////////////////
 
 // Check sending cw to clients
-uint32 mg_check_sendcw()
+uint32_t mg_check_sendcw()
 {
 	struct mg_client_data *cli = cfg.mgcamd.client;
 	uint ticks = GetTickCount();
@@ -660,7 +660,7 @@ uint32 mg_check_sendcw()
 ///////////////////////////////////////////////////////////////////////////////
 
 pthread_t mg_cli_tid;
-int start_thread_mgcamd()
+int32_t start_thread_mgcamd()
 {
 	create_prio_thread(&mg_cli_tid, mg_connect_cli_thread, NULL, 50); // Lock server
 	return 0;
@@ -668,6 +668,6 @@ int start_thread_mgcamd()
 
 void done_mgcamd()
 {
-  if (close(cfg.mgcamd.handle)) debugf("Close failed(%d)",cfg.mgcamd.handle);
+	if (close(cfg.mgcamd.handle)) debugf("Close failed(%d)",cfg.mgcamd.handle);
 }
 

@@ -17,7 +17,6 @@
 #
 #endif
 
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,8 +27,8 @@
 #include <signal.h>
 #include <errno.h>
 
-#include "md5.h"
-#include "sha1.h"
+#include "cscrypt/md5.h"
+#include "cscrypt/sha1.h"
 #include "common.h"
 #include "debug.h"
 #include "msg-cccam.h"
@@ -39,78 +38,78 @@
 ///////////////////////////////////////////////////////////////////////////////
 void cc_crypt_swap(unsigned char *p1, unsigned char *p2)
 {
-  unsigned char tmp=*p1; *p1=*p2; *p2=tmp;
+	unsigned char tmp=*p1; *p1=*p2; *p2=tmp;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void cc_crypt_init( struct cc_crypt_block *block, uint8 *key, int len)
+void cc_crypt_init( struct cc_crypt_block *block, uint8 *key, int32_t len)
 {
-  int i = 0 ;
-  uint8 j = 0;
+	int32_t i = 0 ;
+	uint8 j = 0;
 
-  for (i=0; i<256; i++) {
-    block->keytable[i] = i;
-  }
+	for (i=0; i<256; i++) {
+		block->keytable[i] = i;
+	}
 
-  for (i=0; i<256; i++) {
-    j += key[i % len] + block->keytable[i];
-    SWAPC(&block->keytable[i], &block->keytable[j]);
-  }
+	for (i=0; i<256; i++) {
+		j += key[i % len] + block->keytable[i];
+		cc_crypt_swap(&block->keytable[i], &block->keytable[j]);
+	}
 
-  block->state = *key;
-  block->counter=0;
-  block->sum=0;
+	block->state = *key;
+	block->counter=0;
+	block->sum=0;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // XOR init bytes with 'CCcam'
 void cc_crypt_xor(uint8 *buf)
 {
-  const char cccam[] = "CCcam";
-  uint8 i;
+	const char cccam[] = "CCcam";
+	uint8 i;
 
-  for ( i = 0; i < 8; i++ ) {
-    buf[8 + i] = i * buf[i];
-    if ( i <= 5 ) {
-      buf[i] ^= cccam[i];
-    }
-  }
+	for ( i = 0; i < 8; i++ ) {
+		buf[8 + i] = i * buf[i];
+		if ( i <= 5 ) {
+			buf[i] ^= cccam[i];
+		}
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void cc_decrypt(struct cc_crypt_block *block, uint8 *data, int len)
+void cc_decrypt(struct cc_crypt_block *block, uint8 *data, int32_t len)
 {
-  int i;
-  uint8 z;
+	int32_t i;
+	uint8 z;
 
-  for (i = 0; i < len; i++) {
-    block->counter++;
-    block->sum += block->keytable[block->counter];
-    SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
-    z = data[i];
-    data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
-    z = data[i];
-    block->state = block->state ^ z;
-  }
+	for (i = 0; i < len; i++) {
+		block->counter++;
+		block->sum += block->keytable[block->counter];
+		cc_crypt_swap(&block->keytable[block->counter], &block->keytable[block->sum]);
+		z = data[i];
+		data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
+		z = data[i];
+		block->state = block->state ^ z;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void cc_encrypt(struct cc_crypt_block *block, uint8 *data, int len)
+void cc_encrypt(struct cc_crypt_block *block, uint8 *data, int32_t len)
 {
-  int i;
-  uint8 z;
+	int32_t i;
+	uint8 z;
   // There is a side-effect in this function:
   // If in & out pointer are the same, then state is xor'ed with modified input
   // (because output(=in ptr) is written before state xor)
   // This side-effect is used when initialising the encrypt state!
-  for (i = 0; i < len; i++) {
-    block->counter++;
-    block->sum += block->keytable[block->counter];
-    SWAPC(&block->keytable[block->counter], &block->keytable[block->sum]);
-    z = data[i];
-    data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
-    block->state = block->state ^ z;
-  }
+	for (i = 0; i < len; i++) {
+		block->counter++;
+		block->sum += block->keytable[block->counter];
+		cc_crypt_swap(&block->keytable[block->counter], &block->keytable[block->sum]);
+		z = data[i];
+		data[i] = z ^ block->keytable[(block->keytable[block->counter] + block->keytable[block->sum]) & 0xff] ^ block->state;
+		block->state = block->state ^ z;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -118,28 +117,24 @@ void cc_encrypt(struct cc_crypt_block *block, uint8 *data, int len)
 // card_id : local card_id for the server
 void cc_crypt_cw(uint8 *nodeid/*client node id*/, uint32 card_id, uint8 *cws)
 {
-  uint8 tmp;
-  int i;
-  int n;
-  uint8 nod[8];
+	uint8 tmp;
+	int32_t i,n;
+	uint8 nod[8];
 
-  for(i=0; i<8; i++) nod[i] = nodeid[7-i];
-  for (i = 0; i < 16; i++) {
-    if (i&1)
-	if (i!=15) n = (nod[i>>1]>>4) | (nod[(i>>1)+1]<<4); else n = nod[i>>1]>>4;
-    else n = nod[i>>1];
-    n = n & 0xff;
-    tmp = cws[i] ^ n;
-    if (i & 1) tmp = ~tmp;
-    cws[i] = (card_id >> (2 * i)) ^ tmp;
-    //printf("(%d) n=%02x, tmp=%02x, cw=%02x\n",i,n,tmp,cws[i]); 
-  }
+	for(i=0; i<8; i++) nod[i] = nodeid[7-i];
+	for (i = 0; i < 16; i++) {
+		if (i&1)
+		if (i!=15) n = (nod[i>>1]>>4) | (nod[(i>>1)+1]<<4); else n = nod[i>>1]>>4;
+		else n = nod[i>>1];
+		n = n & 0xff;
+		tmp = cws[i] ^ n;
+		if (i & 1) tmp = ~tmp;
+		cws[i] = (card_id >> (2 * i)) ^ tmp;
+		//printf("(%d) n=%02x, tmp=%02x, cw=%02x\n",i,n,tmp,cws[i]); 
+	}
 }
 
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
 // Return:
 // =0: Disconnected
@@ -147,9 +142,9 @@ void cc_crypt_cw(uint8 *nodeid/*client node id*/, uint32 card_id, uint8 *cws)
 // >0: Success
 
 
-int cc_msg_recv(int handle,struct cc_crypt_block *recvblock, uint8 *buf, int timeout)
+int32_t cc_msg_recv(int32_t handle,struct cc_crypt_block *recvblock, uint8 *buf, int32_t timeout)
 {
-	int len;
+	int32_t len,msglen;
 	uint8 netbuf[CC_MAXMSGSIZE];
 
 	if (handle < 0) return -1;
@@ -197,13 +192,12 @@ int cc_msg_recv(int handle,struct cc_crypt_block *recvblock, uint8 *buf, int tim
 }
 
 
-
 // -1: not yet
 // 0: disconnect
 // >0: ok
-int cc_msg_chkrecv(int handle,struct cc_crypt_block *recvblock)
+int32_t cc_msg_chkrecv(int32_t handle,struct cc_crypt_block *recvblock)
 {
-	int len;
+	int32_t len;
 	uint8 netbuf[CC_MAXMSGSIZE];
 	struct cc_crypt_block block;
 
@@ -217,7 +211,7 @@ int cc_msg_chkrecv(int handle,struct cc_crypt_block *recvblock)
 	memcpy( &block, recvblock, sizeof(struct cc_crypt_block));
 	cc_decrypt(&block, netbuf, 4);
 
-	int datasize = (netbuf[2] << 8) | netbuf[3];
+	int32_t datasize = (netbuf[2] << 8) | netbuf[3];
 	if ( datasize!=0 ) {  // check if any data is expected in msg
 		if ( datasize > CC_MAXMSGSIZE - 2) return 0; // Disconnect
 		len = recv(handle, netbuf, 4+datasize, MSG_PEEK|MSG_NOSIGNAL|MSG_DONTWAIT);
@@ -234,7 +228,7 @@ int cc_msg_chkrecv(int handle,struct cc_crypt_block *recvblock)
 // =0: Disconnected
 // -1: Packet Error
 // >0: Success
-int cc_msg_recv_nohead(int handle, struct cc_crypt_block *recvblock, uint8 *buf, int len)
+int32_t cc_msg_recv_nohead(int32_t handle, struct cc_crypt_block *recvblock, uint8 *buf, int32_t len)
 {
 	if (handle < 0) return -1;
 	len = recv_nonb(handle, buf, len, 2000);  // read rest of msg
@@ -243,27 +237,29 @@ int cc_msg_recv_nohead(int handle, struct cc_crypt_block *recvblock, uint8 *buf,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-int cc_msg_send(int handle,struct cc_crypt_block *sendblock, cc_msg_cmd cmd, int len, uint8 *buf)
+int32_t cc_msg_send(int32_t handle,struct cc_crypt_block *sendblock, cc_msg_cmd cmd, int32_t len, uint8_t *buf)
 {
-  uint8 netbuf[CC_MAXMSGSIZE];
+	int32_t n;
+	uint8_t netbuf[CC_MAXMSGSIZE];
 
-  memset(netbuf, 0, len+4);
-  if (cmd == CC_MSG_NO_HEADER) memcpy(netbuf, buf, len);
-  else {
-    // build command message
-    netbuf[0] = 0;   // flags??
-    netbuf[1] = cmd & 0xff;
-    netbuf[2] = len >> 8;
-    netbuf[3] = len & 0xff;
-    if (buf) memcpy(netbuf+4, buf, len);
-    len += 4;
-  }
-  //debugdump(netbuf, len, "CCcam: Send data");
+	memset(netbuf, 0, len+4);
+	if (cmd == CC_MSG_NO_HEADER) memcpy(netbuf, buf, len);
+	else {
+		// build command message
+		netbuf[0] = 0;   // flags??
+		netbuf[1] = cmd & 0xff;
+		netbuf[2] = len >> 8;
+		netbuf[3] = len & 0xff;
+		if (buf) memcpy(netbuf+4, buf, len);
+		len += 4;
+	}
+	//debugdump(netbuf, len, "CCcam: Send data");
 	if (flag_debugnet) {
 		debugf(" CCcam: send data %d\n",len);
 		debughex(netbuf,len);
 	}
-  cc_encrypt(sendblock, netbuf, len);
-  return send_nonb(handle, netbuf, len, 10);
+	cc_encrypt(sendblock, netbuf, len);
+	n = send_nonb(handle, netbuf, len, 100);
+	return n;
 }
 

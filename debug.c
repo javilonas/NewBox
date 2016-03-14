@@ -92,14 +92,14 @@ void debug(char *str)
 
 char* debugtime(char *str)
 {
-    struct timeval tv;
-    gettimeofday( &tv, NULL );
-    int ms = tv.tv_usec / 1000;
-    int hr = (1+(tv.tv_sec/3600)) % 24;
-    int mn = (tv.tv_sec % 3600) /60;
-    int sd = (tv.tv_sec % 60);
-    sprintf( str, "[%02d:%02d:%02d.%03d]", hr,mn,sd,ms);
-    return str;
+	struct timeval tv;
+	gettimeofday( &tv, NULL );
+	int ms = tv.tv_usec / 1000;
+	int hr = (1+(tv.tv_sec/3600)) % 24;
+	int mn = (tv.tv_sec % 3600) /60;
+	int sd = (tv.tv_sec % 60);
+	sprintf( str, "[%02d:%02d:%02d.%03d]", hr,mn,sd,ms);
+	return str;
 }
 
 
@@ -124,7 +124,7 @@ void debugf(char *format, ...)
 		sprintf( debugline, "[%02d:%02d:%02d.%03d]", hr,mn,sd,ms);
 		index = strlen(debugline);
 	} else index=0;
-	
+
 	va_list args;
 	va_start (args, fstr);
 	vsprintf( debugline+index, fstr, args);

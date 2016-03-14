@@ -1,6 +1,6 @@
 #if 0
 # 
-# Copyright (c) 2014 - 2015 Javier Sayago <admin@lonasdigital.com>
+# Copyright (c) 2014 - 2016 Javier Sayago <admin@lonasdigital.com>
 # Contact: javilonas@esp-desarrolladores.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -22,9 +22,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <linux/dvb/ca.h>
-#include <linux/dvb/dmx.h>
-#include <linux/dvb/frontend.h>
 #include <linux/ioctl.h>
 
 #include <sys/types.h>
@@ -52,20 +49,21 @@
 #include <sys/time.h>
 #include <sys/utsname.h>
 #include <sys/sysinfo.h>
+#include <sys/un.h>
 
 #include "common.h"
+#include <getopt.h>
 #include "tools.h"
 #include "debug.h"
 #include "sockets.h"
 #include "threads.h"
 #include "convert.h"
 
-#include "aes.h"
-#include "des.h"
-#include "md5.h"
-#include "sha1.h"
-#include "seca.h"
-#include "irdeto.h"
+#include "cscrypt/bn.h"
+#include "cscrypt/aes.h"
+#include "cscrypt/des.h"
+#include "cscrypt/md5.h"
+#include "cscrypt/sha1.h"
 
 #include "msg-newcamd.h"
 #ifdef CCCAM
@@ -80,9 +78,13 @@
 #include "config.h"
 #include "httpserver.h"
 
-#define CA_BASE		"/dev/dvb/adapter0/ca"
-#define DEMUX_BASE	"/dev/dvb/adapter0/demux"
-#define DEMUX_MAP	"/dev/dvb/adapter%d/demux0"
+#include <linux/dvb/ca.h>
+#include <linux/dvb/dmx.h>
+#include <linux/dvb/frontend.h>
+
+#define CADEV		"/dev/dvb/adapter0/ca1"
+#define DMXDEV		"/dev/dvb/adapter0/demux0"
+#define CAMDSOCKET	"/tmp/camd.socket"
 
 #ifdef CFG
 char config_file[512] = CFG;
@@ -94,10 +96,11 @@ char config_badcw[512] = "/var/etc/badcw.cfg";
 char config_channelinfo[512] = "/var/etc/newbox.channelinfo";
 
 char cccam_nodeid[8];
+char freecccam_nodeid[8];
 
-int flag_debugscr;
-int flag_debugnet;
-int flag_debugfile;
+int32_t flag_debugscr;
+int32_t flag_debugnet;
+int32_t flag_debugfile;
 char debug_file[256];
 char sms_file[256];
 
@@ -128,23 +131,20 @@ uint rdgd_dcw_check_time = 0;
 
 
 // 0: different ; 1:~equivalent
-int cmp_cards( struct cs_card_data* card1, struct cs_card_data* card2)
+int32_t cmp_cards( struct cs_card_data* card1, struct cs_card_data* card2)
 {
-	int i,j,found;
-	int nbsame = 0;
-	int nbdiff = 0;
+	int32_t i,j,found;
+	int32_t nbsame = 0;
+	int32_t nbdiff = 0;
 
 	if (card1->caid!=card2->caid) return 0;
 
-
-/*	if ( ((card1->caid & 0xff00)==0x0100)
-		|| ((card1->caid & 0xff00)==0x1800)
-		|| ((card1->caid & 0xff00)==0x1810)
-		|| ((card1->caid & 0xff00)==0x0500)
+/*
+	if ( ((card1->caid & 0xff00)==0x1800)
 		|| ((card1->caid & 0xff00)==0x0900)
 		|| ((card1->caid & 0xff00)==0x0b00) ) return 1;
 */
-	if ( ((card1->caid & 0xff00)!=0x0100) && ((card1->caid & 0xff00)!=0x1800) && ((card1->caid & 0xff00)!=0x1810) && ((card1->caid & 0xff00)!=0x0500) && ((card1->caid & 0xff00)!=0x0900) && ((card1->caid & 0xff00)!=0x0b00) ) return 1;
+	if ( ((card1->caid & 0xff00)!=0x0100) && ((card1->caid & 0xff00)!=0x0500) ) return 1;
 
 	for(i=0; i<card1->nbprov;i++) {
 		found = 0;
@@ -162,17 +162,20 @@ int cmp_cards( struct cs_card_data* card1, struct cs_card_data* card2)
 
 
 // Get Any card to decode
-struct cs_card_data *srv_findcard( struct cs_server_data *srv, struct cardserver_data *cs, uint16 ecmcaid, uint32 ecmprov)
+struct cs_card_data *srv_findcard( struct cs_server_data *srv, struct cardserver_data *cs, uint16_t ecmcaid, uint32_t ecmprov)
 {
 	// check for card to decode
 	struct cs_card_data *pcard = srv->card;
 	struct cs_card_data *selcard = NULL;
-	int i;
+	int32_t i;
 	while (pcard) {
 		if ( ecmcaid == pcard->caid ) {
 			for (i=0; i<pcard->nbprov;i++) if (ecmprov==pcard->prov[i]) break;
 			if  ( ( i<pcard->nbprov ) || ( cs && cmp_cards(pcard, &cs->card) ) ) {
 				if (srv->type==TYPE_NEWCAMD) {
+					selcard = pcard;
+					break;
+				} else if (srv->type==TYPE_MGCAMD) {
 					selcard = pcard;
 					break;
 				}
@@ -198,9 +201,9 @@ struct cs_card_data *srv_findcard( struct cs_server_data *srv, struct cardserver
 }
 
 
-void srv_cstatadd( struct cs_server_data *srv, int csid, int ok, uint32 ecmoktime)
+void srv_cstatadd( struct cs_server_data *srv, int32_t csid, int32_t ok, uint32_t ecmoktime)
 {
-	int i;
+	int32_t i;
 	for(i=0; i<MAX_CSPORTS; i++) {
 		if (!srv->cstat[i].csid) {
 			srv->cstat[i].csid = csid;
@@ -229,17 +232,10 @@ void srv_cstatadd( struct cs_server_data *srv, int csid, int ok, uint32 ecmoktim
 
 
 ///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 
 // check for card existance
-int istherecard(struct cs_server_data *srv, struct cs_card_data *acard)
+int32_t istherecard(struct cs_server_data *srv, struct cs_card_data *acard)
 {
 	struct cs_card_data *card = srv->card;
 	while(card) {
@@ -250,24 +246,24 @@ int istherecard(struct cs_server_data *srv, struct cs_card_data *acard)
 }
 
 
-int match_card( uint16 caid, uint32 prov, struct cs_card_data* card)
+int32_t match_card( uint16_t caid, uint32_t prov, struct cs_card_data* card)
 {
 	if (caid!=card->caid) return 0;
 	// Dont care about provider for caid non via/seca
-	if ( ((card->caid & 0xff00)!=0x0100) && ((card->caid & 0xff00)!=0x1800) && ((card->caid & 0xff00)!=0x1810) && ((card->caid & 0xff00)!=0x0500) && ((card->caid & 0xff00)!=0x0900) && ((card->caid & 0xff00)!=0x0b00) ) return 1;
-	int i;
+	if ( ((card->caid & 0xff00)!=0x0100) && ((card->caid & 0xff00)!=0x0500) ) return 1;
+	int32_t i;
 	for(i=0; i<card->nbprov;i++) if (prov==card->prov[i]) return 1;
 	return 0;
 }
 
 // Search for a card with best sid val.
 // TODO: option validecmtime-ecmtime
-int sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16 caid, uint32 prov, uint16 sid, struct cs_card_data **selcard )
+int32_t sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16_t caid, uint32_t prov, uint16_t sid, struct cs_card_data **selcard )
 {
 	struct cs_card_data *card = NULL;
 
 	*selcard = NULL;
-	if ( (srv->type==TYPE_NEWCAMD) || (srv->type==TYPE_RADEGAST) ) {
+	if ( (srv->type==TYPE_NEWCAMD) || (srv->type==TYPE_MGCAMD) || (srv->type==TYPE_RADEGAST) ) {
 		card = srv->card;
 		while (card) {
 			if ( match_card(caid,prov,card) ) break;
@@ -279,7 +275,7 @@ int sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16
 			while (sidata) {
 				if (sidata->sid==sid)
 				if (sidata->prov==prov) return sidata->val;
-				sidata = sidata->next;			
+				sidata = sidata->next;
 			}
 		}
 		return 0; // Channel not found in sid cache
@@ -288,14 +284,14 @@ int sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16
 	else if (srv->type==TYPE_CCCAM) {
 		// Search for availabe card cannot be found in sids
 		*selcard = NULL;
-		int selsidvalue = 0;
+		int32_t selsidvalue = 0;
 		card = srv->card;
 		while (card) {
 			if ( match_card(caid,prov,card)
 				|| ( !prov && cs && cmp_cards(card, &cs->card) ) // use for prov=0
 			) {
 				// Search fo sid
-				int sidvalue = 0; // by default
+				int32_t sidvalue = 0; // by default
 
 				struct sid_data *sidata = card->sids;
 				while (sidata) {
@@ -303,7 +299,7 @@ int sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16
 						sidvalue = sidata->val;
 						break;
 					}
-					sidata = sidata->next;			
+					sidata = sidata->next;
 				}
 
 				// Check with Selected card (sidvalue) TODO: classify by ecmtime, decode, stability
@@ -329,7 +325,7 @@ int sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16
 }
 
 
-void cardsids_add(struct cs_card_data *card, uint32 prov, uint16 sid,int val)
+void cardsids_add(struct cs_card_data *card, uint32_t prov, uint16_t sid,int32_t val)
 {
 	if (!sid) return;
 	struct sid_data *sidata = malloc( sizeof(struct sid_data) );
@@ -343,7 +339,7 @@ void cardsids_add(struct cs_card_data *card, uint32 prov, uint16 sid,int val)
 }
 
 
-int cardsids_update(struct cs_card_data *card, uint32 prov, uint16 sid,int val)
+int32_t cardsids_update(struct cs_card_data *card, uint32_t prov, uint16_t sid,int32_t val)
 {
 	if (!sid) return 0;
 
@@ -378,18 +374,15 @@ int cardsids_update(struct cs_card_data *card, uint32 prov, uint16 sid,int val)
 // Common profile functions
 ///////////////////////////////////////////////////////////////////////////////
 
-struct cardserver_data *getcsbycaidprov( uint16 caid, uint32 prov)
+struct cardserver_data *getcsbycaidprov( uint16_t caid, uint32_t prov)
 {
-	int i;
+	int32_t i;
 	if (!caid) return NULL;
 	struct cardserver_data *cs = cfg.cardserver;
 	while (cs) {
 		if (cs->card.caid==caid) {
 			for(i=0; i<cs->card.nbprov;i++) if (cs->card.prov[i]==prov) return cs;
-			if ( ((cs->card.caid & 0xff00)==0x0100)
-				|| ((cs->card.caid & 0xff00)==0x1800)
-				|| ((cs->card.caid & 0xff00)==0x1810)
-				|| ((cs->card.caid & 0xff00)==0x0500)
+			if ( ((cs->card.caid & 0xff00)==0x1800)
 				|| ((cs->card.caid & 0xff00)==0x0900)
 				|| ((cs->card.caid & 0xff00)==0x0b00) ) return cs;
 		}
@@ -399,7 +392,7 @@ struct cardserver_data *getcsbycaidprov( uint16 caid, uint32 prov)
 }
 
 
-struct cardserver_data *getcsbyid(uint32 id)
+struct cardserver_data *getcsbyid(uint32_t id)
 {
 	if (!id) return NULL;
 	struct cardserver_data *cs = cfg.cardserver;
@@ -411,7 +404,7 @@ struct cardserver_data *getcsbyid(uint32 id)
 }
 
 
-struct cardserver_data *getcsbyport(int port)
+struct cardserver_data *getcsbyport(int32_t port)
 {
 	struct cardserver_data *cs = cfg.cardserver;
 	while (cs) {
@@ -422,7 +415,7 @@ struct cardserver_data *getcsbyport(int port)
 }
 
 
-struct cs_server_data *getsrvbyid(uint32 id)
+struct cs_server_data *getsrvbyid(uint32_t id)
 {
 	if (!id) return NULL;
 	struct cs_server_data *srv = cfg.server;
@@ -438,9 +431,9 @@ struct cs_server_data *getsrvbyid(uint32 id)
 // Return
 //  0: not accepted
 //  1: accepted
-int accept_sid(struct cardserver_data *cs, uint16 sid)
+int32_t accept_sid(struct cardserver_data *cs, uint16_t sid)
 {
-	int i;
+	int32_t i;
 	// Check for Accepted sids
 	if (!sid) {
 		if (!cs->faccept0sid) return 0;
@@ -448,7 +441,7 @@ int accept_sid(struct cardserver_data *cs, uint16 sid)
 	else {
 		if (cs->sids) {
 			if (!cs->isdeniedsids) {
-				int accepted = 0;
+				int32_t accepted = 0;
 				for(i=0;i<MAX_SIDS;i++) {
 					if (!cs->sids[i]) break; // end of sids
 					else if (cs->sids[i]==sid) {
@@ -459,7 +452,7 @@ int accept_sid(struct cardserver_data *cs, uint16 sid)
 				if (!accepted) return 0;
 			}
 			else {
-				int accepted = 1;
+				int32_t accepted = 1;
 				for(i=0;i<MAX_SIDS;i++) {
 					if (!cs->sids[i]) break; // end of sids
 					else if (cs->sids[i]==sid) {
@@ -474,9 +467,9 @@ int accept_sid(struct cardserver_data *cs, uint16 sid)
 	return 1;
 }
 
-int accept_prov(struct cardserver_data *cs, uint32 prov)
+int32_t accept_prov(struct cardserver_data *cs, uint32_t prov)
 {
-	int i;
+	int32_t i;
 	// Check for provid, accept provid==0
 	if (prov) {
 		for (i=0; i<cs->card.nbprov;i++) if (prov==cs->card.prov[i]) break;
@@ -488,7 +481,7 @@ int accept_prov(struct cardserver_data *cs, uint32 prov)
 	return 1;
 }
 
-int accept_caid(struct cardserver_data *cs, uint16 caid)
+int32_t accept_caid(struct cardserver_data *cs, uint16_t caid)
 {
 	// Check for caid, accept caid=0
 	if (caid) {
@@ -500,14 +493,14 @@ int accept_caid(struct cardserver_data *cs, uint16 caid)
 	return 1;
 }
 
-int accept_ecmlen(int ecmlen)
+int32_t accept_ecmlen(int32_t ecmlen)
 {
 	if ( (ecmlen<20)||(ecmlen>300) ) return 0;
 	return 1;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-void ecm_setdcw( struct cardserver_data *cs, ECM_DATA *ecm, uchar dcw[16], int srctype, int srcid);
+void ecm_setdcw( struct cardserver_data *cs, ECM_DATA *ecm, uchar dcw[16], int32_t srctype, int32_t srcid);
 
 #include "dcwfilter.c"
 
@@ -553,24 +546,24 @@ void ecm_setdcw( struct cardserver_data *cs, ECM_DATA *ecm, uchar dcw[16], int s
 
 pthread_t cli_tid;
 
-int checkthread;
+int32_t checkthread;
 
 unsigned int seed2;
 
-uint8 fastrnd2()
+uint8_t fastrnd2()
 {
-  unsigned int offset = 12923+(GetTickCount()&0xff);
-  unsigned int multiplier = 4079+(GetTickCount()&0xff);
-  seed2 = seed2 * multiplier + offset;
-  return (uint8)(seed2 % 0xFF);
+	unsigned int offset = 12923+(GetTickCount()&0xff);
+	unsigned int multiplier = 4079+(GetTickCount()&0xff);
+	seed2 = seed2 * multiplier + offset;
+	return (uint8_t)(seed2 % 0xFF);
 }
 
-int mainprocess()
+int32_t mainprocess()
 {
 	struct utsname info;
 	gettimeofday( &startime, NULL );
-  	debugf("\n");
-  	debugf("Starting NewBox...\n");
+	debugf("\n");
+	debugf("Starting NewBox...\n");
 	debugf("\n");
 	debugf("\n");
 	debugf("CardServer NewBox v%s, build %s ", VERSION, DATE_BUILD);
@@ -580,9 +573,9 @@ int mainprocess()
 	//debugf("release = %s\n", info.release);
 	//debugf("version = %s\n", info.version);
 	debugf("%s).\n\n", info.machine);
-	debugf("Copyright (C) 2014 - 2015 developed by Javilonas.\n");
+	debugf("Copyright (C) 2014 - 2016 developed by Javilonas.\n");
 	debugf("This program is distributed under GPLv3.\n");
-    debugf("Source Code NewBox: https://github.com/javilonas/NewBox\n");
+	debugf("Source Code NewBox: https://github.com/javilonas/NewBox\n");
 	debugf("Visit https://www.lonasdigital.com for more details.\n\n");
 
 // INIT
@@ -635,7 +628,7 @@ int mainprocess()
 	/* Create the pipe. */
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, srvsocks) < 0) { perror("opening stream socket pair"); exit(1); }
 
-#ifdef CCCAM 
+#ifdef CCCAM
 	cccam_nodeid[0] = 0x11;
 	cccam_nodeid[1] = 0x22;
 	cccam_nodeid[2] = 0x33;
@@ -646,6 +639,17 @@ int mainprocess()
 	cccam_nodeid[7] = 0xff & fastrnd2();
 #endif
 
+#ifdef FREECCCAM_SRV
+	freecccam_nodeid[0] = 0x11;
+	freecccam_nodeid[1] = 0x22;
+	freecccam_nodeid[2] = 0x33;
+	freecccam_nodeid[3] = 0x44;
+	freecccam_nodeid[4] = 0xff & fastrnd2();
+	freecccam_nodeid[5] = 0xff & fastrnd2();
+	freecccam_nodeid[6] = 0xff & fastrnd2();
+	freecccam_nodeid[7] = 0xff & fastrnd2();
+#endif
+
 	init_config(&cfg);
 	read_config(&cfg);
 
@@ -653,7 +657,7 @@ int mainprocess()
 	if ( check_config(&cfg) ) return -1;
 
 	read_chinfo(&prg);
-	
+
 	read_badcw(&prg);
 
 	init_ecmdata();
@@ -709,7 +713,7 @@ int mainprocess()
 #endif
 #endif
 
-void sighandler(int sig, siginfo_t *info, void *secret) {
+void sighandler(int32_t sig, siginfo_t *info, void *secret) {
 
 	ucontext_t *uc = (ucontext_t *)secret;
 	printf(" Got signal %d ", sig);
@@ -733,21 +737,21 @@ void sighandler(int sig, siginfo_t *info, void *secret) {
 
 void install_handler (void)
 {
-  struct sigaction sa;
-  memset(&sa, 0, sizeof(sigaction));
-  sa.sa_sigaction = (void *)sighandler;
-  sigemptyset (&sa.sa_mask);
-  sa.sa_flags = SA_RESTART | SA_SIGINFO;
-  sigaction(SIGSEGV, &sa, NULL);
+	struct sigaction sa;
+	memset(&sa, 0, sizeof(sigaction));
+	sa.sa_sigaction = (void *)sighandler;
+	sigemptyset (&sa.sa_mask);
+	sa.sa_flags = SA_RESTART | SA_SIGINFO;
+	sigaction(SIGSEGV, &sa, NULL);
 }
 #endif
 
-int main(int argc, char *argv[])
+int32_t main(int32_t argc, char *argv[])
 {
-	int option_background = 0; // default
-	int fork_return;
+	int32_t option_background = 0; // default
+	int32_t fork_return;
 	char *args;
-	int i,j;
+	int32_t i,j;
 
 #ifdef SIG_HANDLER
 	install_handler();
@@ -834,7 +838,7 @@ OPTIONS\n\
 			if (prg.restart==1) { // restart()
 				debugf(" Restarting '%s'...\n", argv[0]);
 				//TODO:stop threads
-				int fork_return;
+				int32_t fork_return;
 				done_config(&cfg);
 				fork_return = vfork();
 				if( fork_return < 0) {

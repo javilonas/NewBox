@@ -33,7 +33,7 @@ extern char debug_file[256];
 extern int flag_debugtrace;
 extern struct trace_data trace;
 
-#define MAX_DBGLINES 27 // 50 default
+#define MAX_DBGLINES 28 // 50 default
 extern char dbgline[MAX_DBGLINES][512];
 extern int idbgline;
 

@@ -17,26 +17,27 @@
 #
 #endif
 
-unsigned int hostname2ip( const char *hostname );
+uint32_t hostname2ip( char *hostname );
 char *ip2string( unsigned int hostaddr );
 char *iptoa(char *dest, unsigned int ip );
 
-int fdstatus_read(int s);
-int fdstatus_readt(int s, int tim);
-int fdstatus_write(int s);
-int fdstatus_accept(int s);
+int32_t fdstatus_read(int32_t s);
+int32_t fdstatus_readt(int32_t s, int32_t tim);
+int32_t fdstatus_write(int32_t s);
+int32_t fdstatus_accept(int32_t s);
 // SOCKET OPTIONS
-int SetSocketTimeout(int connectSocket, int milliseconds);
-int SetSocketNoDelay(int sock);
-int SetSocketKeepalive(int sock);
+int32_t SetSocketTimeout(int32_t connectSocket, int32_t milliseconds);
+int32_t SetSocketNoDelay(int32_t sock);
+int32_t SetSocketKeepalive(int32_t sock);
 // UDP CONNECTION
-SOCKET CreateServerSockUdp(int port);
+SOCKET CreateServerSockUdp(int32_t port);
 SOCKET CreateClientSockUdp();
 // TCP CONNECTION
-SOCKET CreateServerSockTcp(int port);
+SOCKET CreateServerSockTcp(int32_t port);
 SOCKET CreateClientSockTcp(unsigned int netip, int port);
+
 // TCP NON BLOCKED CONNECTION
 int CreateClientSockTcp_nonb(unsigned int netip, int port);
-int recv_nonb(SOCKET sock,uint8 *buf,int len,int timeout);
-int send_nonb(SOCKET sock,uint8 *buf,int len,int to);
-SOCKET CreateServerSockTcp_nonb(int port);
+int32_t recv_nonb(SOCKET sock,uint8_t *buf,int32_t len,int32_t timeout);
+int32_t send_nonb(SOCKET sock,uint8_t *buf,int32_t len,int32_t to);
+SOCKET CreateServerSockTcp_nonb(int32_t port);

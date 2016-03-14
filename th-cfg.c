@@ -29,14 +29,14 @@
 
 void *reread_config_thread(void *param)
 {
-    int fd = inotify_init(); //1(IN_NONBLOCK);
-    int wd = inotify_add_watch(fd,config_file, IN_CLOSE_WRITE|IN_IGNORED);
-    struct inotify_event *event;
+	int fd = inotify_init(); //1(IN_NONBLOCK);
+	int wd = inotify_add_watch(fd,config_file, IN_CLOSE_WRITE|IN_IGNORED);
+	struct inotify_event *event;
 	char buf[1024];
 
 	//prg.pid_cfg = syscall(SYS_gettid);
 
-    while(1) {
+	while(1) {
 		int len = read(fd,buf,1024);
 		int changed = 0;
 		int i = 0;
@@ -44,7 +44,7 @@ void *reread_config_thread(void *param)
 			event=(struct inotify_event *) &buf[i];
 			//displayInotifyEvent(event);
 			if (event->mask & IN_CLOSE_WRITE) changed = 1;
-            if (event->mask & IN_IGNORED) wd = inotify_add_watch(fd,config_file, IN_CLOSE_WRITE|IN_IGNORED);
+			if (event->mask & IN_IGNORED) wd = inotify_add_watch(fd,config_file, IN_CLOSE_WRITE|IN_IGNORED);
 			i += sizeof(struct inotify_event) + event->len;
 		}
 		if (changed) {
@@ -100,7 +100,7 @@ void *reread_config_thread(void *param)
 			pthread_mutex_unlock(&prg.lockdnsth);
 		}
 		usleep(30000);
-    }
+	}
 }
 
 
@@ -119,7 +119,7 @@ void *reread_config_thread(void *param)
 	stat( name, &config_stat);
 	config_mtime = config_stat.st_mtime;
 
-	//prg.pid_cfg = syscall(SYS_gettid);
+	prg.pid_cfg = syscall(SYS_gettid);
 
 	// Connect Clients 
 	while (1) {
@@ -185,7 +185,7 @@ void *reread_config_thread(void *param)
 
 
 		}
-    }
+	}
 }
 
 #endif
