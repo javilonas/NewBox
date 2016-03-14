@@ -123,7 +123,7 @@ int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned 
 	memset( &ecmdata[srvmsgid].server, 0, sizeof(ecmdata[srvmsgid].server) );
 	ecmdata[srvmsgid].waitcache = 0;
 	ecmdata[srvmsgid].cachestatus = ECM_CACHE_NONE;
-	ecmdata[srvmsgid].dcwsrctype = DCW_SOURCE_NONE;
+	//ecmdata[srvmsgid].dcwsrctype = DCW_SOURCE_NONE;
 
 #ifdef CHECK_NEXTDCW
 	checkfreeze_storeECM(srvmsgid);
@@ -132,7 +132,7 @@ int store_ecmdata(int csid, uchar *ecm,int ecmlen, unsigned short sid, unsigned 
 	return srvmsgid;
 }
 
-#define TIME_ECMALIVE 100000 // 60000
+#define TIME_ECMALIVE 60000
 
 int32_t search_ecmdata( uchar *ecm, int32_t ecmlen, unsigned short sid)
 {
@@ -384,13 +384,13 @@ int32_t checkfreeze_setdcw( int32_t ecmid, uchar dcw[16] )
 	if (!ecm) return 1;
 	if (ecm->lastdecode.status!=1) return 1; // no old successful decode
 
-
+/*
 	char str1[512];
 	char str2[512];
 	array2hex( ecm->lastdecode.dcw, str1, 16);
 	array2hex( dcw, str2, 16);
 	debugf(" \n[SET DCW] (%04x:%06x:%04x/%08x) Cntr:%d\nOLD[%s] -- NEW[%s]\n",ecm->caid, ecm->provid, ecm->sid, ecm->hash, ecm->lastdecode.counter, str1, str2);
-
+*/
 	if (ecm->lastdecode.counter<3) {
 		// Check consecutif cw
 		if ( memcmp(dcw,ecm->lastdecode.dcw,16) && ( !memcmp(dcw,ecm->lastdecode.dcw,8)||!memcmp(dcw+8,ecm->lastdecode.dcw+8,8) ) )

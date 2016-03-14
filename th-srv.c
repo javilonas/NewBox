@@ -89,7 +89,7 @@ void *cs_connect_servers(void *param)
 {
 	struct cs_server_data *srv;
 
-	prg.pid_srv = syscall(SYS_gettid);
+	//prg.pid_srv = syscall(SYS_gettid);
 
 	while (1) {
 		pthread_mutex_lock(&prg.locksrvth);

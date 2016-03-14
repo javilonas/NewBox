@@ -119,7 +119,7 @@ void *reread_config_thread(void *param)
 	stat( name, &config_stat);
 	config_mtime = config_stat.st_mtime;
 
-	prg.pid_cfg = syscall(SYS_gettid);
+	//prg.pid_cfg = syscall(SYS_gettid);
 
 	// Connect Clients 
 	while (1) {

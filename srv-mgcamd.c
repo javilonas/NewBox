@@ -163,7 +163,7 @@ void *th_mg_connect_cli(struct mg_clicon *param)
 		buf[1] = 0;
 		buf[2] = 0;
 
-		clicd.msgid = 0;
+		//clicd.msgid = 0;
 		clicd.sid = 0x6E73;
 		clicd.caid = 0;
 		clicd.provid = 0x14000000; // mgcamd protocol version?

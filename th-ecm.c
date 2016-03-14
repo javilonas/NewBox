@@ -53,7 +53,6 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 		if (
 			( cs->fallownewcamd&&(srv->type==TYPE_NEWCAMD) )
 			|| ( cs->fallowcccam&&(srv->type==TYPE_CCCAM) )
-			|| ( cs->fallowmgcamd&&(srv->type==TYPE_MGCAMD) )
 			|| ( cs->fallowradegast&&(srv->type==TYPE_RADEGAST) )
 		)
 		if (srv->handle>0)
@@ -185,14 +184,14 @@ int srvtab_arrange(struct cardserver_data *cs, int ecmid, int bestone )
 #endif
 			// Mgcamd
 #ifdef MGCAMD_SRV
-
+/*
 			struct mg_client_data *mgcli = cfg.mgcamd.client;
 			while (mgcli) {
 				if ( (mgcli->handle!=INVALID_SOCKET)&&(mgcli->ip==srvtab[j].srv->host->ip)&&(mgcli->ecm.busy)&&(mgcli->ecm.id==ecmid) ) break; // DELETE SERVER
 				mgcli = mgcli->next;
 			}
 			if (mgcli) continue;
-
+*/
 #endif
 			// ADD SERVER
 			if (i<j) memcpy( &srvtab[i], &srvtab[j], sizeof(struct srvtab_data));
@@ -523,7 +522,7 @@ uint32_t check_sendecm()
 #endif
 							// Send DCW to Cache if not sent
 							if ( cs->usecache && (ecm->cachestatus==ECM_CACHE_REQ) ) {
-								pipe_send_cache_reply(ecm,cs); //Send Failed Cache Reply
+								//pipe_send_cache_reply(ecm,cs); //Send Failed Cache Reply
 								ecm->cachestatus=ECM_CACHE_REP;
 							}
 						}

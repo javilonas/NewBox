@@ -17,7 +17,7 @@
 #
 #endif
 
-#define MAX_ECM_DATA 6096 // 4096 default
+#define MAX_ECM_DATA 4096
 
 #define ECM_SRV_REQUEST     0
 #define ECM_SRV_REPLY_GOOD  1

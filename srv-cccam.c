@@ -20,7 +20,6 @@
 
 void *cc_connect_cli_thread(void *param);
 void cc_cli_recvmsg(struct cc_client_data *cli);
-int32_t len;
 
 ///////////////////////////////////////////////////////////////////////////////
 // CARDS FUNCTIONS
@@ -314,8 +313,8 @@ void *cc_connect_cli(struct struct_clicon *param)
 	send_nonb(sock, buf, 20, 0);
 
 	//sprintf(cli->user,"%s", ip2string(ip));
-	cli->ecmnb=0;
-	cli->ecmok=0;
+	//cli->ecmnb=0;
+	//cli->ecmok=0;
 	memcpy(&cli->sendblock,&sendblock,sizeof(sendblock));
 	memcpy(&cli->recvblock,&recvblock,sizeof(recvblock));
 	debugf(" CCcam: client '%s' connected\n", usr);
@@ -331,28 +330,28 @@ void *cc_connect_cli(struct struct_clicon *param)
 	}
 
 	// Setup Client Data
-	pthread_mutex_lock(&prg.lockcccli);
+	// pthread_mutex_lock(&prg.lockcccli);
 	memcpy( cli->nodeid, buf+24, 8);
 	memcpy( cli->version, buf+33, 31);
 	memcpy( cli->build, buf+65, 31 );
 	debugf(" CCcam: client '%s' running version %s build %s\n", usr, cli->version, cli->build);  // cli->nodeid,8,
 	cli->cardsent = 0;
 	cli->connected = GetTickCount();
-	cli->lastecmtime = GetTickCount();
+	//cli->lastecmtime = GetTickCount();
 	cli->handle = sock;
 	cli->ip = ip;
 	cli->chkrecvtime = 0;
-	pthread_mutex_unlock(&prg.lockcccli);
+	//pthread_mutex_unlock(&prg.lockcccli);
 
 	// send cli data ack
 	cc_msg_send( sock, &cli->sendblock, CC_MSG_CLI_INFO, 0, NULL);
-	cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
+	//cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
 	int32_t sendversion = ( (cli->version[28]=='W')&&(cli->version[29]='H')&&(cli->version[30]='O') );
 	cc_sendinfo_cli(cli, sendversion);
-	cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
+	//cc_msg_send( sock, &cli->sendblock, CC_MSG_BAD_ECM, 0, NULL);
 	cli->cardsent = 1;
 	//TODO: read from client packet CC_MSG_BAD_ECM
-	len = cc_msg_recv(cli->handle, &cli->recvblock, buf, 3);
+	//len = cc_msg_recv(cli->handle, &cli->recvblock, buf, 3);
 	usleep(10000);
 	cc_sendcards_cli(cli);
 	cli->handle = sock;
@@ -526,7 +525,7 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 						}
 
 						// ACCEPTED
-						cs->ecmaccepted++;
+						//cs->ecmaccepted++;
 						//cli->ecmaccepted++;
 
 						// XXX: check ecm tag = 0x80,0x81
@@ -573,11 +572,11 @@ void cc_cli_recvmsg(struct cc_client_data *cli)
 						break;
 					 case CC_MSG_BAD_ECM:
 						//debugf(" CCcam: cmd 0x05 ACK from client '%s'\n",cli->user);
-						if (cli->cardsent==0) {
-							cc_sendcards_cli(cli);
-							cli->cardsent=1;
-						}
-
+						//if (cli->cardsent==0) {
+						//	cc_sendcards_cli(cli);
+						//	cli->cardsent=1;
+						//}
+	
 						break;
 					 //default: debugf(" CCcam: Unknown Packet ID : %02x from client '%s'\n", buf[1],cli->user);
 				}
@@ -658,7 +657,7 @@ uint32_t cc_check_sendcw()
 	uint restime = ticks + 10000;
 	uint clitime = restime;
 	while (cli) {
-			if ( (cli->handle!=INVALID_SOCKET)&&(cli->ecm.busy)&&(cli->ecm.status==STAT_ECM_SENT) ) {
+			if ( (cli->handle!=INVALID_SOCKET)&&(cli->ecm.busy) ) { //&&(cli->ecm.status==STAT_ECM_SENT) ) {
 				pthread_mutex_lock(&prg.lockecm); //###
 				// Check for DCW ANSWER
 				ECM_DATA *ecm = getecmbyid(cli->ecm.id);

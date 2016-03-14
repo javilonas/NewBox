@@ -30,7 +30,7 @@ void cs_getsrvmsg();
 int32_t cmp_cards( struct cs_card_data* card1, struct cs_card_data* card2);
 struct cs_card_data *srv_findcard( struct cs_server_data *srv, struct cardserver_data *cs, uint16 ecmcaid, uint32 ecmprov);
 
-void srv_cstatadd( struct cs_server_data *srv, int32_t csid, int32_t ok, int32_t ecmoktime);
+void srv_cstatadd( struct cs_server_data *srv, int32_t csid, int32_t ok); //, int ecmoktime)
 
 int32_t sidata_getval(struct cs_server_data *srv, struct cardserver_data *cs, uint16 caid, uint32 prov, uint16 sid, struct cs_card_data **selcard );
 void sidata_add(struct cs_server_data *srv, uint8 *nodeid, uint16 caid, uint32 prov, uint16 sid,int32_t val);
