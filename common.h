@@ -50,8 +50,8 @@
 #endif
 #endif
 
-#define DATE_BUILD    "13-03-2016"
-#define VERSION    "07.r27"
+#define DATE_BUILD    "15-03-2016"
+#define VERSION    "07.r28"
 #define REVISION   07
 
 #define FALSE 0
